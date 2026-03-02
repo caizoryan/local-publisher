@@ -1,0 +1,585 @@
+import { memo, reactive } from "./chowk.js";
+import { dom } from "./dom.js";
+import {
+	addEdge,
+	addNode,
+	registery,
+	removeEdge,
+	removeNode,
+	state,
+	store,
+	try_set_channel,
+} from "./state.js";
+import { Keymanager } from "./keymanager.js";
+import { sidebar } from "./sidebar.js";
+import { dragOperations } from "./dragOperations.js";
+import { notificationpopup } from "./notification.js";
+import { add_block, add_link, connect_block, update_block } from "./arena.js";
+import {
+	BlockElement,
+	button,
+	constructBlockData,
+	CSSTransform,
+	uuid,
+} from "./block.js";
+import { helpbar } from "./help.js";
+import { extract_block_id, link_is_block } from "./md.js";
+import { pinnedCanvas } from "./canvas.js";
+import { propertybar } from "./propertyEditor.js";
+
+// first order of business
+// 1. Get canvas showing and moving like before
+// 2. Load blocks from Are.na
+// 3. Implement store
+// 4. Add nodes to store
+// 5. Render block
+
+// -------------
+// Utitlies
+// ~~~~~~~~~~~~~
+let checkSlugUrl = (url) => {
+	if (!url.includes("#")) return;
+	else return url.split("#").filter((e) => e != "").pop();
+};
+
+let downloadData = () => {
+	let download_json = (json, file = "data") => {
+		let a = document.createElement("a");
+
+		json = JSON.stringify(json);
+		console.log(json);
+		let blob = new Blob([json], { type: "octet/stream" });
+		let url = window.URL.createObjectURL(blob);
+
+		a.href = url;
+		a.download = file + ".book";
+		a.click();
+		window.URL.revokeObjectURL(url);
+	};
+	download_json(store.get(["data"]), state.currentSlug.value());
+};
+
+const link_is_url = (
+	str,
+) => (str.includes("http://") || str.includes("https://"));
+
+let pasteInBlock = () => {
+	navigator.clipboard.readText().then((res) =>
+		res.split("\n").forEach((res) => {
+			console.log(res, link_is_url(res));
+			if (link_is_block(res)) {
+				console.log("will connect block: ", extract_block_id(res), " to slug");
+				connect_block(state.currentSlug.value(), extract_block_id(res))
+					.then((block) => {
+						console.log("BLock?", block);
+						let newBlock = constructBlockData(block, {
+							x: state.canvasX.value(),
+							y: state.canvasY.value(),
+							width: 350,
+							height: 350,
+						});
+						addNode(newBlock);
+						document.querySelector(".container").appendChild(
+							BlockElement(block),
+						);
+					});
+			} else if (link_is_url(res)) {
+				add_link(state.currentSlug.value(), res.trim())
+					.then((block) => {
+						console.log("BLock?", block);
+						let newBlock = constructBlockData(block, {
+							x: state.canvasX.value(),
+							y: state.canvasY.value(),
+							width: 350,
+							height: 350,
+						});
+						addNode(newBlock);
+						document.querySelector(".container").appendChild(
+							BlockElement(block),
+						);
+					});
+			}
+		})
+	);
+};
+
+let copySelection = () => {
+	let text = state.selected.value().map((e) => "https://are.na/block/" + e)
+		.join("/n");
+
+	console.log(text);
+	navigator.clipboard.writeText(text);
+};
+
+// --------------------
+// ACTIONS
+// --------------------
+const toggleTrackingMode = () =>
+	state.trackpad_movement = !state.trackpad_movement;
+const toggleSidebar = () => state.sidebarOpen.next((e) => !e);
+const togglePropertyBar = () => state.propertybarOpen.next((e) => !e);
+const toggleHelpbar = () => state.helpOpen.next((e) => !e);
+const removeCurrentEdge = () => {
+	state.selectedConnection.value().forEach((edge) => {
+		removeEdge(edge);
+	});
+};
+
+const undo = () => store.canUndo() ? store.doUndo() : null;
+const redo = () => store.canRedo() ? store.doRedo() : null;
+
+const inc = (e = false) => e ? 250 : 120;
+const zoomIn = () => state.canvasScale.next((f) => f + (inc() / 500));
+const zoomOut = () => state.canvasScale.next((f) => f - (inc() / 500));
+const moveLeft = () => state.canvasX.next((f) => f - inc());
+const moveRight = () => state.canvasX.next((f) => f + inc());
+const moveUp = () => state.canvasY.next((f) => f - inc());
+const moveDown = () => state.canvasY.next((f) => f + inc());
+
+const vistLast = () => {
+	const last = state.last_history.pop();
+	if (last) animateMove(last.x, last.y);
+};
+
+const escape = () => {
+	state.canceled.next(true);
+	state.selected.next([]);
+	state.selectedConnection.next([]);
+
+	state.block_connection_buffer = undefined;
+
+	state.connectionFromX.next(0);
+	state.connectionFromY.next(0);
+	state.connectionToX.next(0);
+	state.connectionToY.next(0);
+
+	document.querySelectorAll(".wobble").forEach((e) =>
+		e.classList.toggle("wobble")
+	);
+};
+
+const saveCanvasToArena = () => {
+	const content = JSON.stringify(store.get(["data"]));
+	fetch("/fs/" + state.currentSlug.value() + '.json', {
+		method: "POST",
+		body: content,
+		headers: {
+			"Content-Type": "application/json",
+		}
+	}).then(res => {
+		console.log(res)
+		notificationpopup("Updated 👍");
+	})
+	// const description =
+	// 	`This block was made using [Are.na Canvas](http://canvas.a-p.space). You can view this channel as a canvas [here](http://canvas.a-p.space/#${state.currentSlug.value()})`;
+	// update_block(state.dot_book.id, { content, title: ".book", description })
+	// 	.then((res) => {
+	// 		if (res.status == 204) {
+	// 			state.updated.next(true);
+	// 		} else if (res.status == 401) {
+	// 			notificationpopup("Failed: Unauthorized :( ", true);
+	// 		} else notificationpopup("Failed :( status: " + res.status, true);
+	// 	});
+	// } else {
+	// add_block(state.currentSlug.value(), ".book", content).then((res) => {
+	// 	if (res.status == 204) {
+	// 		window.location.reload();
+	// 		// for now jsut refresh, butt todo later:
+	// 		// fetch from v3 api so get the content.plain and then make that dotcanvas.
+	// 		// make this the dotcanvas
+	// 	}
+	// });
+	// }
+};
+
+// ---------------------
+// Main Buttons
+// ~~~~~~~~~~~~~~~~~~~~~
+
+export const CSSTransformNoUnit = (x, y, width, height) => {
+	const v = `
+		position: absolute;
+		left: ${x};
+		top: ${y};`;
+
+	if (width != undefined) v += `width: ${width};`;
+	if (height != undefined) v += `height: ${height};`;
+
+	return v;
+};
+
+const openbtn = button(["span", "SIDEBAR ", ["code", "⌘E"]], toggleSidebar);
+const savebtn = button(["span", "SAVE ", ["code", "⌘S"]], saveCanvasToArena, {
+	updated: state.updated,
+});
+
+const helpbtn = button(
+	["span", "HELP ", ["code", "?"]],
+	() => state.helpOpen.next((e) => !e),
+);
+
+let listFilter = reactive("");
+let listActive = reactive(false);
+let listSelectIndex = reactive(0);
+
+listActive.subscribe((e) => e ? setTimeout(() => searchList.focus(), 0) : null);
+let filteredList = memo(
+	() =>
+		registery.list.value()
+			.filter((e) =>
+				e.toLowerCase().includes(listFilter.value().toLowerCase())
+			),
+	[registery.list, listFilter],
+);
+let searchList = dom(["input", {
+	type: "text",
+	// onblur: () => setTimeout(() => listActive.next(false), 50),
+	value: "",
+	oninput: (e) => listFilter.next(e.target.value),
+	onkeydown: (e) => {
+		if (e.key == "ArrowDown") {
+			listSelectIndex.next((e) =>
+				e < filteredList.value().length - 1 ? e + 1 : null
+			);
+		}
+		if (e.key == "ArrowUp") listSelectIndex.next((e) => e != 0 ? e - 1 : null);
+		if (e.key == "Escape") {
+			searchList.blur();
+			listActive.next(false);
+		}
+		if (e.key == "Enter") {
+			let selection = filteredList.value()[listSelectIndex.value()];
+			if (selection) {
+				state.making_node = selection;
+				listActive.next(false);
+			}
+		}
+	},
+}]);
+const listmenu = [".lister", { active: listActive }, searchList, [
+	".list-items",
+	memo(
+		() =>
+			filteredList.value().map((e, i) =>
+				button(e, () => state.making_node = e, {
+					selected: memo(() => i == listSelectIndex.value(), [
+						listSelectIndex,
+					]),
+				})
+			),
+		[filteredList],
+	),
+]];
+
+const buttons = [".main-buttons", savebtn, openbtn, helpbtn, listmenu];
+
+// --------------------
+// Move this somewhere
+// xxxxxxxxxxxxxxxxxxxxx
+export function moveToBlock(id) {
+	let found = document.querySelector("*[block-id='" + id + "']");
+	if (found) {
+		if (state.moving_timeout) clearTimeout(state.moving_timeout);
+		let { x, y, width, height } = found.getBoundingClientRect();
+		let xDist = x - 150;
+		let yDist = y - 150;
+
+		if (width < window.innerWidth) {
+			let left = (window.innerWidth - width) / 2;
+			xDist = x - left;
+		}
+
+		// if visible don't move
+		if (
+			!(x > 0 && x + width < window.innerWidth) ||
+			!(y > 0 && y + 150 < window.innerHeight)
+		) {
+			let last = {};
+			last.x = state.canvasX.value();
+			last.y = state.canvasY.value();
+
+			state.last_history.push(last);
+
+			let destX = (xDist / state.canvasScale.value()) + last.x;
+			let destY = (yDist / state.canvasScale.value()) + last.y;
+
+			animateMove(destX, destY);
+		}
+
+		let c = found.style.backgroundColor;
+		let z = found.style.zindex;
+		found.style.backgroundColor = "yellow";
+		found.style.zIndex = 99;
+		setTimeout(() => {
+			found.style.backgroundColor = c;
+			found.style.zIndex = z;
+		}, 800);
+	} else {
+		notificationpopup(
+			["span", "Block not found, ", ["a", {
+				href: "https://are.na/block/" + id,
+				target: "_blank",
+			}, "jump to link"], "?"],
+		);
+	}
+}
+
+// --------------
+// Animation
+// --------------
+const lerp = (start, stop, amt) => amt * (stop - start) + start;
+const InOutQuad = (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+let animateMove = (destX, destY) => {
+	let last = {};
+	last.x = state.canvasX.value();
+	last.y = state.canvasY.value();
+
+	let t = 0;
+	let v = 0;
+	let progress = () => {
+		t += .03;
+		v = InOutQuad(t);
+		state.canvasX.next(lerp(last.x, destX, v));
+		state.canvasY.next(lerp(last.y, destY, v));
+		if (t > .99) return;
+		state.moving_timeout = setTimeout(progress, 1000 / 60);
+	};
+	progress();
+};
+
+// -------------
+// Mounters
+// -------------
+export let mount = () => {
+	let url = location.href;
+	let slug = checkSlugUrl(url);
+	slug ? try_set_channel(slug) : try_set_channel(state.currentSlug.value());
+
+	document.body.appendChild(dom(helpbar));
+	document.body.appendChild(dom(sidebar));
+	document.body.appendChild(dom(propertybar()));
+	document.body.appendChild(dom(buttons));
+};
+
+let unmountContainer = () => {
+	let exists = document.querySelector(".container");
+	if (exists) exists.remove();
+};
+export let mountContainer = (children) => {
+	unmountContainer();
+
+	// CSS transforms
+	// ~~~~~~~~~~~~~~~~~~~~
+	let stylemmeo = memo(() => `
+		transform-origin:
+			${state.canvasX.value() + window.innerWidth / 2}px
+			${state.canvasY.value() + window.innerHeight / 2}px;
+
+		transform:
+				translate(
+						${state.canvasX.value() * -1}px,
+						${state.canvasY.value() * -1}px)
+				scale(${state.canvasScale.value()});`, [
+		state.canvasX,
+		state.canvasY,
+		state.canvasScale,
+	]);
+
+	// cursor
+	// ~~~~~~~
+	let cursor = [".cursor", {
+		style: memo(() =>
+			CSSTransform(
+				state.containerMouseX.value(),
+				state.containerMouseY.value(),
+				15,
+				15,
+			), [state.containerMouseX, state.containerMouseY]),
+	}];
+
+	// DOM
+	// ~~~~
+	let root = dom([".container", {
+		holding: state.holdingCanvas,
+		style: stylemmeo,
+		onpointerdown,
+		onpointermove,
+		onpointerup,
+		...dragOperations,
+	}, ...children]);
+
+	root.onmousemove = (e) => {
+		if (e.target != root) return;
+		state.containerMouseX.next(e.offsetX);
+		state.containerMouseY.next(e.offsetY);
+
+		if (state.block_connection_buffer) {
+			state.connectionToY.next(e.offsetY);
+			state.connectionToX.next(e.offsetX);
+		}
+	};
+
+	// ---------
+	// MOUNT
+	// ~~~~~~~~~
+	document.body.appendChild(pinnedCanvas);
+	document.body.appendChild(root);
+	// ---------
+};
+// ---------------
+// Data Logic
+// ---------------
+// Processing blocks
+// Updating data
+// Constructing data
+// setting slug
+// pulling from are.na
+
+// ---------------
+// Nodes
+// ---------------
+// x
+// y
+// scale
+// minimap
+
+// ---------------
+// Buttons
+// ---------------
+// help
+// save
+// sidebar
+
+// ---------------
+// event listeners
+// ---------------
+// keydown
+// wheel
+// drag and drop
+
+// -------------------
+// Wheel Event (!)
+// ~~~~~~~~~~~~~~~~~~~
+document.addEventListener("wheel", (e) => {
+	if (e.ctrlKey) {
+		// trackpad...
+		e.preventDefault();
+		state.canvasScale.next((f) => f - (e.deltaY / 400));
+	} else if (e.metaKey) {
+		e.preventDefault();
+		state.canvasScale.next((f) => f - (e.deltaY / 1000));
+	} else if (state.trackpad_movement) {
+		e.preventDefault();
+		state.canvasY.next((f) => f + e.deltaY * 1.5);
+		state.canvasX.next((f) => f + e.deltaX * 1.5);
+	}
+}, { passive: false });
+
+export let keys = new Keymanager();
+let prevent = { preventDefault: true };
+
+keys.on("cmd + z", undo, prevent);
+keys.on("cmd + shift + z", redo, prevent);
+keys.on("cmd + =", zoomIn, prevent);
+keys.on("cmd + -", zoomOut, prevent);
+
+keys.on("ArrowRight", moveRight, { disable_in_input: true });
+keys.on("ArrowLeft", moveLeft, { disable_in_input: true });
+
+keys.on("ArrowUp", moveUp, { disable_in_input: true });
+keys.on("ArrowDown", moveDown, { disable_in_input: true });
+
+keys.on("cmd + e", toggleSidebar, prevent);
+keys.on("cmd + shift + e", togglePropertyBar, prevent);
+keys.on("escape", escape, { modifiers: false, disable_in_input: true });
+keys.on("b", vistLast, { modifiers: false, disable_in_input: true });
+keys.on("t", toggleTrackingMode, { disable_in_input: true });
+
+// keys.on("s", () => state.making_node = "canvas", {
+// 	modifiers: false,
+// 	disable_in_input: true,
+// });
+//TEMPORARAY
+
+keys.on("cmd + s", saveCanvasToArena, prevent);
+
+keys.on("shift + /", toggleHelpbar, { disable_in_input: true });
+keys.on("slash", () => listActive.next((e) => !e), {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("cmd + enter", registery.refreshData, {
+	preventDefault: true,
+});
+
+keys.on("cmd + shift + c", () => {
+	if (state.selected.value().length >= 2) {
+		let selections = state.selected.value();
+		let start = selections[0];
+		selections.slice(1).forEach((e) => {
+			let end = e;
+
+			addEdge({
+				id: uuid(),
+				fromNode: start,
+				fromSide: "right",
+				toNode: end,
+				toSide: "left",
+			});
+
+			start = e;
+		});
+	}
+}, {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("cmd + c", copySelection, {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("shift + c", () => state.mode.next("connect"), {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("shift + p", () => state.mode.next("pan"), {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("shift + r", () => state.mode.next("resize"), {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+keys.on("cmd + d", downloadData, {
+	disable_in_input: true,
+	preventDefault: true,
+});
+
+let remove = () => {
+	// if (state.selected.value().length == 1) {
+	// 	console.log("Removing? node?");
+	// 	removeNode(state.selected.value()[0]);
+	// }
+	removeCurrentEdge();
+};
+keys.on("backspace", remove, { disable_in_input: true, ...prevent });
+
+document.onkeydown = (e) => keys.event(e);
+
+// --------------------
+// Hash watcher
+// --------------------
+window.onhashchange = (event) => {
+	let slug = checkSlugUrl(event.newURL);
+	if (slug) try_set_channel(slug);
+};
+// -------------------
+// Initialization FN
+// -------------------
+mount();
