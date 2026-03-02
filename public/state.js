@@ -36,6 +36,7 @@ import { physariumCanvas, renderCanvas, renderPDFCanvas } from "./canvas.js";
 import { V } from "./schema.js";
 
 import { Circle, ImageElement, Line, Text } from "./components/shapes.js";
+import { Fold } from "./components/fold.js";
 
 let stringify = JSON.stringify;
 export let mouse = reactive({ x: 0, y: 0 });
@@ -244,6 +245,7 @@ registery.register(ApplyFunction);
 registery.register(Number);
 registery.register(CollectObjects);
 registery.register(Line);
+registery.register(Fold);
 registery.register(LineEditor);
 registery.register(NamedObject);
 

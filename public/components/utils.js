@@ -935,20 +935,40 @@ export let String = {
 	outputs: {},
 	render: (node, i, updateOut) => {
 		let r = dataR(getNodeLocation(node.id), node.id);
-		let key = r("value");
+		let value = r("value");
 
-		let text = dom(["textarea", {
+		let _r = dataR(getNodeLocation(node.id), node.id, "_data");
+		let key = _r("key");
+
+		key.next((key.value() || 'value'))
+
+		let keyEl = dom(["input", {
 			type: "text",
+			style: "border-bottom: 1px solid black",
 			oninput: (e) => {
 				key.next(e.target.value.trim());
 				updateOut();
 			},
 			value: key,
-		}, key]);
+		}]);
 
-		return [dom(["span", "STRING"]), text];
+		let text = dom(["textarea", {
+			type: "text",
+			oninput: (e) => {
+				value.next(e.target.value.trim());
+				updateOut();
+			},
+			value: value,
+		}, value]);
+
+		return [keyEl, text,];
 	},
-	transform: (props) => props,
+	transform: (props, _props) => {
+		let key = _props.key ? _props.key : 'value'
+		let obj = {}
+		obj[key] = props.value
+		return obj
+	},
 };
 
 export let Number = {
