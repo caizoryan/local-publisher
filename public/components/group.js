@@ -1,4 +1,4 @@
-import { Color, CSSTransform, isRectContained, isRectIntersecting, Transform } from "../block.js";
+import { Color, CSSTransform, isRectContained, isRectIntersecting, resizers, Transform } from "../block.js";
 import { memo } from "../chowk.js";
 import { dom } from "../dom.js";
 import { drag } from "../drag.js";
@@ -113,14 +113,14 @@ export function GroupElement(group) {
 	};
 
 
-	// let edges = resizers(left, top, width, height, { onstart, onend });
+	let edges = resizers(left, top, width, height, { onstart, onend });
 	// let connectionEdges = connectors(group, left, top, width, height);
 	let el = dom(
 		".draggable.group",
 		{ style },
 		// colorBars(group, removeButton()),
 		// groupTitleLabel(group),
-		// ...edges,
+		...edges,
 		// ...connectionEdges,
 	);
 
