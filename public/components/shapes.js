@@ -137,6 +137,7 @@ export const Text = {
 		boundingBox: V.number(0),
 		fontSize: V.number(12),
 		fontFamily: V.string("Times-Roman"),
+		fontWeight: V.number(300),
 		fill: V.array([0, 0, 50, 15]),
 		// stroke: V.string("black"),
 		// v.or(v.string('black'), v.array([0,0,0,100]))

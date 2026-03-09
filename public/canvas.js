@@ -5,6 +5,7 @@ import { memo, reactive } from "./chowk.js";
 import { dom } from "./dom.js";
 import { p5 } from "./p5.js";
 import { Q5 } from "./q5.js";
+// import p5 from './p5.esm.js'
 import { getNodeLocation, state, store, subscribeToId } from "./state.js";
 
 import { blobStream } from "./blob-stream.js";
@@ -486,9 +487,9 @@ export const physariumCanvas = (node, inputs, updateOut) => {
 	let initp5 = (pp) => {
 		p = pp;
 		let font;
-		p.preload = () => {
-			font = p.loadFont("./font.otf");
-		};
+		// p.preload = () => {
+		// 	font = p.loadFont("./font.otf");
+		// };
 		p.setup = () => {
 			p.createCanvas(state.width, state.height);
 			p.textFont("Times");
@@ -726,6 +727,7 @@ let drawText = (props) => (p) => {
 	let height = props.height ? props.height : 100;
 	let text = props.text;
 	let fontSize = props.fontSize ? props.fontSize : 12;
+	let fontWeight = props.fontWeight ? props.fontWeight : 300;
 	let fontFamily = props.fontFamily;
 	// let stroke = props.stroke ? true : false;
 
@@ -740,6 +742,12 @@ let drawText = (props) => (p) => {
 		: p.noStroke();
 
 	if (fontFamily) p.textFont(fontFamily);
+	if (fontWeight) {
+		console.log("BRUG", "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif")
+		let ctx = p.canvas.getContext('2d')
+		ctx.font = "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif";
+	}
+		// p.textWeight(fontWeight);
 	// if (props.stroke) doc.stroke(props.stroke);
 	p.textSize(fontSize);
 	p.text(text, x, y, width, height);
