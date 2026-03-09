@@ -741,15 +741,16 @@ let drawText = (props) => (p) => {
 			: p.stroke(props.stroke)
 		: p.noStroke();
 
-	if (fontFamily) p.textFont(fontFamily);
-	if (fontWeight) {
 		console.log("BRUG", "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif")
 		let ctx = p.canvas.getContext('2d')
 		ctx.font = "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif";
-	}
+
+	// if (fontFamily) p.textFont(fontFamily);
+	// if (fontWeight) {
+	// }
 		// p.textWeight(fontWeight);
 	// if (props.stroke) doc.stroke(props.stroke);
-	p.textSize(fontSize);
+	// p.textSize(fontSize);
 	p.text(text, x, y, width, height);
 
 	if (props.boundingBox) {

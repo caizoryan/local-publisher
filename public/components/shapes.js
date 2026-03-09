@@ -105,9 +105,61 @@ export const Line = {
 		strokeWeight: V.number(5),
 		// v.or(v.string('black'), v.array([0,0,0,100]))
 	},
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Line", props],
+	}),
+};
+
+export const HorizontalLine = {
+	id: "horizontal-line",
+	render: () => [dom(["span", "horizontal-line"])],
+	inputs: {
+		x: V.number(0),
+		y: V.number(10),
+		length: V.number(100),
+		stroke: V.string("black"),
+		strokeWeight: V.number(5),
+		// v.or(v.string('black'), v.array([0,0,0,100]))
+	},
+	color: '2',
+	outputs: {},
+	transform: (props) => ({
+		draw: ["Line", {
+			points: [
+				{x: props.x, y: props.y },
+				{x: props.x+props.length, y: props.y },
+			],
+			stroke: props.stroke,
+			strokeWeight: props.strokeWeight,
+		}],
+	}),
+};
+
+export const VerticalLine = {
+	id: "vertical-line",
+	color: '2',
+	render: () => [dom(["span", "vertical-line"])],
+	inputs: {
+		x: V.number(0),
+		y: V.number(10),
+		length: V.number(100),
+		stroke: V.string("black"),
+		strokeWeight: V.number(5),
+		// v.or(v.string('black'), v.array([0,0,0,100]))
+	},
+	color: '2',
+	outputs: {},
+	transform: (props) => ({
+		draw: ["Line", {
+			points: [
+				{x: props.x, y: props.y },
+				{x: props.x, y: props.y+props.length },
+			],
+			stroke: props.stroke,
+			strokeWeight: props.strokeWeight,
+		}],
 	}),
 };
 
@@ -142,6 +194,8 @@ export const Text = {
 		// stroke: V.string("black"),
 		// v.or(v.string('black'), v.array([0,0,0,100]))
 	},
+
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Text", props],
@@ -156,6 +210,7 @@ export const Group = {
 		// stroke: V.string("black"),
 		// v.or(v.string('black'), v.array([0,0,0,100]))
 	},
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Group", props.draw],
@@ -173,6 +228,7 @@ export const ImageElement = {
 		image: V.string(""),
 		// v.or(v.string('black'), v.array([0,0,0,100]))
 	},
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Image", props],
@@ -191,6 +247,7 @@ export const Circle = {
 		stroke: V.string("black"),
 		// v.or(v.string('black'), v.array([0,0,0,100]))
 	},
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Circle", props],
@@ -208,6 +265,7 @@ export const Quad = {
 		fill: V.array([0, 0, 50, 15]),
 		stroke: V.string("black"),
 	},
+	color: '2',
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Circle", props],
