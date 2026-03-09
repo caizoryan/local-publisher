@@ -1,4 +1,5 @@
 import { memo, reactive } from "./chowk.js";
+import { dom } from "./dom.js";
 import { getNodeLocation, state, store } from "./state.js";
 
 let selected = (i, address) => {
@@ -76,10 +77,33 @@ export let objectui = (object, address = [], renderer = defaultrenderer) => {
 		];
 	});
 
-	return [".object", {
+	let fold = reactive(false)
+	let items = memo(() => fold.value() ? folded : f, [fold])
+
+	let foldButton = ['button', {
+		style: memo(() => fold.value() ? 'opactiy: 1' : 'opacity:.5', [fold]),
+		onclick: e => {
+			console.log(e.target.parentNode, obj)
+			if (e.target.parentNode == obj) {
+				e.stopImmediatePropagation()
+				e.stopPropagation()
+				fold.next(e => !e)
+			}
+		}
+	}, '>']
+
+	let folded = [['.fold', 'FOLDED']]
+
+
+
+	let obj = dom([".object", {
 		tabindex: 0,
 		...selected(address[address.length - 1], address.slice(0, -1)),
-	}, ...f];
+	},
+		foldButton,
+		, items])
+
+	return obj;
 };
 
 export let arrayui = (arr, address = [], renderer = defaultrenderer) => {

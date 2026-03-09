@@ -19,20 +19,15 @@ let pinnedTask;
 
 let pinned;
 
-let pageWidth = 612;
-let pageHeight = 792;
+let pageWidth = window.innerHeight - 50;
+let pageHeight = window.innerWidth - 50;
 let init = (pp) => {
-	console.log(pp, "what");
 	pinned = pp;
+	pinned.disableFriendlyErrors = true;
 
 	pinned.setup = () => {
-		console.log("BURGG");
 		pinned.createCanvas(pageHeight, pageWidth);
-
 		pinnedContext = pinned.canvas.getContext("2d");
-
-		// pinned.background(252, 255, 0);
-		// pinned.rect(20, 20, 150, 100);
 	};
 };
 
@@ -171,6 +166,7 @@ export const renderPDFCanvas = (node, inputs) => {
 
 		let fns = {
 			"Circle": drawCircleDocFn,
+			"Quad": drawQuadDocFn,
 			"Text": drawTextDocFn,
 			"Image": drawImageDocFn,
 			"Line": drawLineDocFn,
@@ -227,8 +223,6 @@ export const renderPDFCanvas = (node, inputs) => {
 };
 
 export const renderCanvas = (node, inputs) => {
-	let pageWidth = 612;
-	let pageHeight = 792;
 	let paused = false;
 
 	let isPinned = memo(() => state.pinnedNode.value() == node.id, [
@@ -240,13 +234,29 @@ export const renderCanvas = (node, inputs) => {
 		next = true;
 	};
 
+	let r = dataR(getNodeLocation(node.id), node.id);
+	let pageWidth = r('width')
+	let pageHeight = r('height')
+
+	pageWidth.next(
+		pageWidth.value() || 612
+	)
+
+	pageHeight.next(
+		pageHeight.value() || 792
+	)
+
 	let canvas = dom([".canvas"]);
 
 	let p;
+	memo(() => {
+		if (p) p.resizeCanvas(pageHeight.value(), pageWidth.value());
+	}, [pageWidth, pageHeight])
 	let init = (pp) => {
 		p = pp;
+		p.disableFriendlyErrors = true;
 		p.setup = () => {
-			p.createCanvas(pageHeight, pageWidth);
+			p.createCanvas(pageHeight.value(), pageWidth.value());
 			// p.background(252, 255, 0);
 		};
 	};
@@ -260,6 +270,8 @@ export const renderCanvas = (node, inputs) => {
 
 		let fns = {
 			"Circle": drawCircle,
+			"Quad": drawQuad,
+			"Rect": drawRect,
 			"Text": drawText,
 			"Image": drawImageDocFn,
 			"Line": drawLine,
@@ -280,7 +292,9 @@ export const renderCanvas = (node, inputs) => {
 
 		if (isPinned.value()) {
 			console.log("IS PINNED!");
-			pinned.background(250);
+			pinned.fill(250)
+			pinned.stroke(0)
+			pinned.rect(0, 0, pageHeight.value(), pageWidth.value());
 			fns.Group({ draw: drawables })(pinned);
 			// return;
 		}
@@ -819,4 +833,104 @@ let drawLine = (props) => (doc) => {
 			last = e;
 		},
 	);
+};
+
+let drawQuadDocFn = (props) => (doc) => {
+	let points = props.points;
+	if (points.length < 2) return;
+	if (props.strokeStyle) doc.dash(props.strokeStyle[0])
+	if (props.lineCap) doc.lineCap(props.lineCap)
+	if (props.lineJoin) doc.lineJoin(props.lineJoin)
+	// let start = points[0];
+	// let x1 = start.x;
+	// let y1 = start.y;
+	//
+	// let end = points[1];
+	// let x2 = end.x;
+	// let y2 = end.y;
+
+	doc.save();
+	doc.lineWidth(props.strokeWeight);
+	doc.polygon(...points.slice(0, 4).map((p) => [p.x, p.y]))
+
+	// .lineTo(x2, y2);
+	if (props.stroke && props.fill) doc.fillAndStroke(props.fill, props.stroke);
+	else if (props.stroke) doc.stroke(props.stroke);
+	else if (props.fill) doc.fill(props.fill);
+	doc.restore();
+};
+
+let drawQuad = (props) => (p) => {
+	let points = props.points;
+	if (!points || points.length < 4) return;
+
+	let validPoints = points
+		.slice(0, 4)
+		.filter((pt) => pt && typeof pt === "object");
+
+	if (validPoints.length < 4) return;
+
+	p.push();
+
+	// Stroke settings
+	if (props.stroke) p.stroke(props.stroke);
+	else p.noStroke();
+
+	if (props.strokeWeight) p.strokeWeight(props.strokeWeight);
+
+	if (props.lineCap) p.strokeCap(props.lineCap);
+	if (props.lineJoin) p.strokeJoin(props.lineJoin);
+
+	// Dashed line support (via canvas context)
+	if (props.strokeStyle) {
+		p.drawingContext.setLineDash(props.strokeStyle);
+	} else {
+		p.drawingContext.setLineDash([]);
+	}
+
+	// Fill settings
+	if (props.fill) p.fill(props.fill);
+	else p.noFill();
+
+	p.quad(
+		validPoints[0].x, validPoints[0].y,
+		validPoints[1].x, validPoints[1].y,
+		validPoints[2].x, validPoints[2].y,
+		validPoints[3].x, validPoints[3].y
+	);
+
+	p.pop();
+};
+
+let drawRect = (props) => (p) => {
+	p.push();
+
+	// Stroke settings
+	if (props.stroke) p.stroke(props.stroke);
+	else p.noStroke();
+
+	if (props.strokeWeight) p.strokeWeight(props.strokeWeight);
+
+	if (props.lineCap) p.strokeCap(props.lineCap);
+	if (props.lineJoin) p.strokeJoin(props.lineJoin);
+
+	// Dashed line support (via canvas context)
+	if (props.strokeStyle) {
+		p.drawingContext.setLineDash(props.strokeStyle);
+	} else {
+		p.drawingContext.setLineDash([]);
+	}
+
+	// Fill settings
+	if (props.fill) p.fill(props.fill);
+	else p.noFill();
+
+	p.rect(
+		props.x,
+		props.y,
+		props.width,
+		props.height,
+	);
+
+	p.pop();
 };

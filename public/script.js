@@ -103,14 +103,6 @@ let pasteInBlock = () => {
 	);
 };
 
-let copySelection = () => {
-	let text = state.selected.value().map((e) => "https://are.na/block/" + e)
-		.join("/n");
-
-	console.log(text);
-	navigator.clipboard.writeText(text);
-};
-
 // --------------------
 // ACTIONS
 // --------------------
@@ -483,23 +475,11 @@ keys.on("cmd + shift + z", redo, prevent);
 keys.on("cmd + =", zoomIn, prevent);
 keys.on("cmd + -", zoomOut, prevent);
 
-keys.on("ArrowRight", moveRight, { disable_in_input: true });
-keys.on("ArrowLeft", moveLeft, { disable_in_input: true });
-
-keys.on("ArrowUp", moveUp, { disable_in_input: true });
-keys.on("ArrowDown", moveDown, { disable_in_input: true });
-
 keys.on("cmd + e", toggleSidebar, prevent);
 keys.on("cmd + shift + e", togglePropertyBar, prevent);
 keys.on("escape", escape, { modifiers: false, disable_in_input: true });
 keys.on("b", vistLast, { modifiers: false, disable_in_input: true });
 keys.on("t", toggleTrackingMode, { disable_in_input: true });
-
-// keys.on("s", () => state.making_node = "canvas", {
-// 	modifiers: false,
-// 	disable_in_input: true,
-// });
-//TEMPORARAY
 
 keys.on("cmd + s", saveCanvasToArena, prevent);
 
@@ -536,10 +516,6 @@ keys.on("cmd + shift + c", () => {
 	preventDefault: true,
 });
 
-keys.on("cmd + c", copySelection, {
-	disable_in_input: true,
-	preventDefault: true,
-});
 
 keys.on("shift + c", () => state.mode.next("connect"), {
 	disable_in_input: true,
@@ -570,7 +546,17 @@ let remove = () => {
 };
 keys.on("backspace", remove, { disable_in_input: true, ...prevent });
 
-document.onkeydown = (e) => keys.event(e);
+document.onkeydown = (e) => {
+	if (state.selected.value().length > 0) {
+		state.selected.value().forEach(f => {
+			if (registery.keys[f]) {
+				registery.keys[f](e)
+			}
+		})
+	}
+
+	keys.event(e)
+};
 
 // --------------------
 // Hash watcher

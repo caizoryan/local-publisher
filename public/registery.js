@@ -28,6 +28,7 @@ export let addToSelection = (block, e) => {
 
 export let duplicateBlock = (props) => {
 	let block = {};
+	props = JSON.parse(JSON.stringify(props))
 	Object.assign(block, props);
 	block.id = block.id ? block.id : uuid();
 	addNode(block);
@@ -130,6 +131,7 @@ let nodeContainer = (node, attr, children) => {
 };
 export let createRegistery = () => {
 	let components = {};
+	let keys = {}
 	let updateFunctions = [];
 	let register = (name, inputs, outputs, render, transform) => {
 		let id = name;
@@ -321,6 +323,14 @@ export let createRegistery = () => {
 		else {
 			let rendered = render(node, inputParsed, updateBuffers);
 			if (Array.isArray(rendered)) {
+				let isOptions = x =>
+					typeof x === 'object' && !Array.isArray(x) && x !== null && !(x instanceof HTMLElement)
+
+				let options = rendered.find(isOptions)
+				if (options) {
+					if (options.keydown) keys[node.id] = options.keydown
+					rendered = rendered.filter(e => !(isOptions(e)))
+				}
 				return nodeContainer(node, { activated }, rendered);
 			} else return rendered;
 		}
@@ -330,5 +340,5 @@ export let createRegistery = () => {
 	let getTransformFn = (id) => components[id]?.transform;
 	let getInputs = (id) => components[id]?.inputs;
 
-	return { register, mount, list, getTransformFn, getInputs, refreshData };
+	return { register, mount, list, getTransformFn, getInputs, refreshData, keys };
 };

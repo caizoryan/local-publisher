@@ -208,7 +208,7 @@ export let dragOperations = {
 
 		if (dragAction == "making-block") {
 			dragAction = "pan";
-			if (width < 150 || height < 150) return;
+			if (width < 25 || height < 25) return;
 			addNode({
 				x,
 				y,

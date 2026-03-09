@@ -195,3 +195,20 @@ export const Circle = {
 		draw: ["Circle", props],
 	}),
 };
+
+export const Quad = {
+	id: "quad",
+	render: () => [['span', 'quad']],
+	inputs: {
+		x: V.number(10),
+		y: V.number(10),
+		points: V.array([]),
+		strokeWeight: V.number(1),
+		fill: V.array([0, 0, 50, 15]),
+		stroke: V.string("black"),
+	},
+	outputs: {},
+	transform: (props) => ({
+		draw: ["Circle", props],
+	}),
+};

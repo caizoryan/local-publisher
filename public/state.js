@@ -36,7 +36,7 @@ import { physariumCanvas, renderCanvas, renderPDFCanvas } from "./canvas.js";
 import { V } from "./schema.js";
 
 import { Circle, ImageElement, Line, Text } from "./components/shapes.js";
-import { Fold } from "./components/fold.js";
+import { Fold, FoldTyper } from "./components/fold.js";
 
 let stringify = JSON.stringify;
 export let mouse = reactive({ x: 0, y: 0 });
@@ -188,6 +188,8 @@ registery.register(
 	"canvas",
 	{
 		draw: V.array().collect(),
+		width: V.number(612),
+		height: V.number(792),
 	},
 	{},
 	renderCanvas,
@@ -246,6 +248,7 @@ registery.register(Number);
 registery.register(CollectObjects);
 registery.register(Line);
 registery.register(Fold);
+registery.register(FoldTyper);
 registery.register(LineEditor);
 registery.register(NamedObject);
 
@@ -406,14 +409,14 @@ let mountEdge = (edge) => {
 
 	let selectionColor = memo(() => {
 		let ret = state.selected.value().reduce((acc, f) => {
-			if (acc != "#ddd4") {
+			if (acc != "#999") {
 				return acc;
 			} else {
 				if (edge.fromNode == f) return "#88f";
 				else if (edge.toNode == f) return "#f8f";
 				else return acc;
 			}
-		}, "#ddd4");
+		}, "#999");
 		return ret;
 	}, [state.selected]);
 
@@ -426,18 +429,51 @@ let mountEdge = (edge) => {
 	let x2 = memo(() => toT.value().x, [toT]);
 	let y2 = memo(() => toT.value().y, [toT]);
 
-	let el = ["line", {
+	const path = memo(() => {
+		let offset = 50
+		const midX = (x1.value() + x2.value()) / 2
+		return `
+    M ${x1.value()} ${y1.value()}
+    C ${midX} ${y1.value() - offset},
+      ${midX} ${y2.value() + offset},
+      ${x2.value()} ${y2.value()}`
+	}, [x1, y1, x2, y2]);
+
+	// --------------
+	// straight lines make selection possible...
+	// --------------
+	//
+	// let el = ["line", {
+	// 	selected: memo(() => state.selectedConnection.value().includes(edge.id), [
+	// 		state.selectedConnection,
+	// 	]),
+	// 	x1,
+	// 	y1,
+	// 	x2,
+	// 	y2,
+	// 	stroke: selectionColor,
+	// 	"marker-start": "url(#x)",
+	// 	"marker-end": "url(#arrow)",
+	// 	"stroke-width": 3,
+	// 	id: "edge-" + edge.id,
+	// 	class: "connection-line",
+	// 	// onpointerdown: (event) => {
+	// 	// 	if (event.shiftKey) {
+	// 	// 		state.selectedConnection.next((a) => [...a, e.id]);
+	// 	// 	} else state.selectedConnection.next([e.id]);
+	// 	// },
+	// }];
+
+	let el = ["path", {
 		selected: memo(() => state.selectedConnection.value().includes(edge.id), [
 			state.selectedConnection,
 		]),
-		x1,
-		y1,
-		x2,
-		y2,
+		d: path,
 		stroke: selectionColor,
+		fill: 'none',
 		"marker-start": "url(#x)",
 		"marker-end": "url(#arrow)",
-		"stroke-width": 3,
+		"stroke-width": 5,
 		id: "edge-" + edge.id,
 		class: "connection-line",
 		// onpointerdown: (event) => {
