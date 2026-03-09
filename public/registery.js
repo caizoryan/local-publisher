@@ -208,10 +208,8 @@ export let createRegistery = () => {
 					// props[key] = [];
 				});
 			} else if (inputs == "COLLECTS") {
-				store.tr(getNodeLocation(node.id).concat(["data"]), "set", [
-					"value",
-					[],
-				], false);
+				store.tr(getNodeLocation(node.id).concat(["data"]), "set",
+					["value", []], false);
 			}
 
 			// sort inputs first based on edges
@@ -232,10 +230,17 @@ export let createRegistery = () => {
 				let values = Object.values(sorted);
 				values = values.filter((e) => e != undefined);
 
-				store.tr(getNodeLocation(node.id).concat(["data"]), "set", [
-					"value",
-					values,
-				], false);
+				values = values.reduce((acc, v) => {
+					Object.entries(v).forEach(([k, v]) => acc[k] ? acc[k].push(v) : acc[k] = [v])
+					return acc
+				}, {})
+
+				Object.entries(values).forEach(([k, v]) => {
+					store.tr(getNodeLocation(node.id)
+						.concat(["data"]), "set",
+						[k, v,], false);
+				})
+
 			} else {
 				Object.values(sorted).forEach((p) => {
 					if (!p) return;

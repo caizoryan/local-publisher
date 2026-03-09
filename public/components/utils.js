@@ -108,16 +108,16 @@ export let add = (node, inputs, updateOut) => {
 	let calculate = () => {
 		let props = getProps(node.id);
 		let added = {};
-		props.value.forEach((obj) => {
-			if (!obj) return;
-			Object.entries(obj).forEach(
-				([key, value]) => {
-					if (added[key] && typeof added[key] == "number") {
-						added[key] += value;
-					} else added[key] = value;
-				},
-			);
-		});
+		// props.value.forEach((obj) => {
+		// 	if (!obj) return;
+		// 	Object.entries(obj).forEach(
+		// 		([key, value]) => {
+		// 			if (added[key] && typeof added[key] == "number") {
+		// 				added[key] += value;
+		// 			} else added[key] = value;
+		// 		},
+		// 	);
+		// });
 		return added.value ? added.value : 0;
 	};
 
@@ -556,7 +556,17 @@ let Function = (node, inputs) => {
 		});
 
 		if (inputs == "COLLECTS") {
-			props.value = Object.values(sorted);
+			let values = Object.values(sorted);
+			values = values.filter((e) => e != undefined);
+
+			values = values.reduce((acc, v) => {
+				Object.entries(v).forEach(([k, v]) => acc[k] ? acc[k].push(v) : acc[k] = [v])
+				return acc
+			}, {})
+
+			Object.entries(values).forEach(([k, v]) => {
+				props[k] = v;
+			})
 		} else {
 			Object.values(sorted).forEach((p) => {
 				if (!p) return;
@@ -878,16 +888,23 @@ export let MathComps = {
 		outputs: {},
 		transform: (props) => {
 			let added = {};
-			props.value.forEach((obj) => {
-				if (!obj) return;
-				Object.entries(obj).forEach(
-					([key, value]) => {
-						if (added[key] && typeof added[key] == "number") {
-							added[key] += value;
-						} else added[key] = value;
-					},
-				);
-			});
+
+			Object.entries(props).forEach(
+				([key, value]) => {
+					if (!value) return
+					if (Array.isArray(value)) {
+						let sum = value.reduce((acc, e) => acc + e, 0)
+						added[key] = sum
+					}
+					// if (added[key] && typeof value == "number") {
+					// 	added[key] += value;
+					// } else added[key] = value;
+				}
+			);
+			// props.value.forEach((obj) => {
+			// 	if (!obj) return;
+			// });
+			console.log("ADD", added)
 			return added;
 			// ({
 			// 		value: props.value.reduce((acc, v) => acc += v, 0),

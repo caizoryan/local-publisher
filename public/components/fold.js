@@ -92,6 +92,26 @@ export let Fold = {
 				update.next(e => e + 1)
 			}
 
+			let plusShiftTop = n => {
+				lines.value()[i][0] = lines.value()[i][0] + n
+				lines.value()[i][1] = lines.value()[i][1] + n
+
+				lines.next(lines.value())
+
+				updateOut()
+				update.next(e => e + 1)
+			}
+
+			let minusShiftTop = n => {
+				lines.value()[i][0] = lines.value()[i][0] - n
+				lines.value()[i][1] = lines.value()[i][1] - n
+
+				lines.next(lines.value())
+
+				updateOut()
+				update.next(e => e + 1)
+			}
+
 			setTimeout(() => {
 				drag(el, {
 					set_left: () => null,
@@ -99,6 +119,8 @@ export let Fold = {
 						currentSelected = {
 							up: () => setTop((top.value() * scale.value()) - scale.value()),
 							down: () => setTop((top.value() * scale.value()) + scale.value()),
+							upShift: () => { minusShiftTop(1) },
+							downShift: () => { plusShiftTop(1) }
 						}
 					},
 					set_top: setTop
@@ -140,11 +162,13 @@ export let Fold = {
 			{
 				keydown: e => {
 					if (e.key == 'ArrowUp') {
-						currentSelected ? currentSelected.up() : null
+						if (e.shiftKey) { currentSelected ? currentSelected.upShift() : null }
+						else currentSelected ? currentSelected.up() : null
 					}
 
 					if (e.key == 'ArrowDown') {
-						currentSelected ? currentSelected.down() : null
+						if (e.shiftKey) { currentSelected ? currentSelected.downShift() : null }
+						else currentSelected ? currentSelected.down() : null
 					}
 				}
 			},
@@ -190,6 +214,7 @@ export let FoldTyper = {
 		x: V.number(0),
 		y: V.number(0),
 		tracking: V.number(0),
+		scale: V.number(1),
 		bounding: V.number(0),
 		letter: V.array([]).collect(),
 		string: V.string(''),
@@ -215,12 +240,20 @@ export let FoldTyper = {
 		return [text,];
 	},
 	transform: (props) => {
-		let map = props.letter.reduce((acc, e) => {
+		let letter = props.letter
+		console.log(letter)
+		if (Array.isArray(letter[0]) && letter.length == 1) letter = letter[0]
+		console.log(letter)
+
+		let map = letter.reduce((acc, e) => {
 			acc[e.letter] = e
 			return acc
 		}, {})
 
-		let f = word(props.string, props.x, props.y, map,
+
+		let f = word(props.string, props.x, props.y,
+			map,
+			props.scale,
 			props.tracking,
 			props.stroke, props.fill, props.strokeWeight, props.bounding)
 
@@ -407,8 +440,12 @@ function letterPoints({ x, y, width, height, code, transforms }) {
 	return { points, box }
 }
 
-let word = (w, x, y,
+let word = (
+	w,
+	x,
+	y,
 	map,
+	scale = 1,
 	tracking = 0,
 	stroke = 'blue',
 	fill = [100, 0, 0, 0],
@@ -430,13 +467,18 @@ let word = (w, x, y,
 
 			if (!e.data) return
 			e = e.data
-			let { points, box } = letterPoints({ x, y, width: e.width, height: e.height, code: e.lines, transforms: { rotate: [e.rotate], scale: [.5] } })
+			let { points, box } = letterPoints({
+				x, y, width: e.width, height: e.height, code: e.lines, transforms: {
+					rotate: [e.rotate],
+					scale: [scale]
+				}
+			})
 			let lett = letter(
 				x, y,
 				e.width,
 				e.height,
 				e.lines,
-				{ rotate: [e.rotate], scale: [.5] },
+				{ rotate: [e.rotate], scale: [scale] },
 				stroke, fill, strokeWeight, bounding
 			)
 
