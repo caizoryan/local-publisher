@@ -139,9 +139,7 @@ export let Fold = {
 		return [
 			{
 				keydown: e => {
-					console.log('ok?', e)
 					if (e.key == 'ArrowUp') {
-						console.log(currentSelected)
 						currentSelected ? currentSelected.up() : null
 					}
 
@@ -243,7 +241,7 @@ function letter(
 ) {
 
 	let spread = []
-	let { points, box } = letterPoints(x, y, w, h, code, transforms)
+	let { points, box } = letterPoints({ x, y, width: w, height: h, code, transforms })
 
 	points.forEach(quad => {
 		spread.push(
@@ -275,7 +273,11 @@ function letter(
 	return spread
 }
 
-function letterPoints(x, y, w, h, code, transforms) {
+function letterPoints({ x, y, width, height, code, transforms }) {
+
+	let w = width
+	let h = height
+
 	let mainrect = [
 		v(x, y),
 		v(x + w, y),
@@ -317,6 +319,24 @@ function letterPoints(x, y, w, h, code, transforms) {
 		};
 	}
 
+
+	function scaleVector(vector, center, scale) {
+		// Translate point to origin
+		const dx = vector.x - center.x;
+		const dy = vector.y - center.y;
+
+		// Scale
+		const scaledX = dx * scale;
+		const scaledY = dy * scale;
+
+		// Translate back
+		return {
+			x: scaledX + center.x,
+			y: scaledY + center.y
+		};
+	}
+
+
 	if (transforms.rotate) {
 		lines = lines.map(([a, b]) => {
 			let pointA = rotateVector(a, { x, y }, transforms.rotate[0])
@@ -327,6 +347,20 @@ function letterPoints(x, y, w, h, code, transforms) {
 
 		mainrect = mainrect.map(e => rotateVector(e, { x, y }, transforms.rotate[0]))
 	}
+
+	// console.log('GOT', transforms.scale)
+
+	if (transforms.scale) {
+		lines = lines.map(([a, b]) => {
+			let pointA = scaleVector(a, { x, y }, transforms.scale[0])
+			let pointB = scaleVector(b, { x, y }, transforms.scale[0])
+
+			return [pointA, pointB]
+		})
+
+		mainrect = mainrect.map(e => scaleVector(e, { x, y }, transforms.scale[0]))
+	}
+
 
 	let _index = 0
 
@@ -380,19 +414,29 @@ let word = (w, x, y,
 	fill = [100, 0, 0, 0],
 	strokeWeight = 2,
 	bounding = 0,
+	spaceWidth = 25
 ) => {
 	let letters = w
 		.split('')
-		.map(e => map[e])
+		.map(e => ({
+			letter: e,
+			data: map[e]
+		}))
 		.map((e, i) => {
-			if (!e) return
-			let { points, box } = letterPoints(x, y, e.width, e.height, e.lines, { rotate: [e.rotate] })
+			if (e.letter == " ") {
+				x += spaceWidth
+				return
+			}
+
+			if (!e.data) return
+			e = e.data
+			let { points, box } = letterPoints({ x, y, width: e.width, height: e.height, code: e.lines, transforms: { rotate: [e.rotate], scale: [.5] } })
 			let lett = letter(
 				x, y,
 				e.width,
 				e.height,
 				e.lines,
-				{ rotate: [e.rotate] },
+				{ rotate: [e.rotate], scale: [.5] },
 				stroke, fill, strokeWeight, bounding
 			)
 

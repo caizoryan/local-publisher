@@ -194,3 +194,84 @@ export let svgArrow = (
 			];
 	}
 };
+
+export function makeLineArrowMarker(
+	size = 1,
+	id = "arrow",
+	color = "black",
+	strokeWidth = 2,
+) {
+	const box = 10 * size;
+	const cx = box;
+	const cy = box / 2;
+	const arm = 4 * size;
+
+	return [
+		"defs",
+		{},
+		[
+			"marker",
+			{
+				id,
+				markerWidth: box + 5 * size,
+				markerHeight: box + 5 * size,
+				refX: cx,
+				refY: cy,
+				orient: "auto",
+				markerUnits: "strokeWidth",
+			},
+			[
+				"path",
+				{
+					d: `
+            M ${cx - arm} ${cy - arm}
+            L ${cx} ${cy}
+            L ${cx - arm} ${cy + arm}
+          `,
+					stroke: color,
+					strokeWidth,
+					strokeLinecap: "round",
+					strokeLinejoin: "round",
+					fill: "none",
+				},
+			],
+		],
+	];
+}
+
+export function makeXMarker(size = 1, id = "x", color = "black", strokeWidth = 2) {
+	const box = 10 * size;
+	const pad = 2 * size;
+
+	return [
+		"defs",
+		{},
+		[
+			"marker",
+			{
+				id,
+				markerWidth: box,
+				markerHeight: box,
+				refX: box / 2,
+				refY: box / 2,
+				orient: "auto",
+				markerUnits: "strokeWidth",
+			},
+			[
+				"path",
+				{
+					d: `
+            M ${pad} ${pad}
+            L ${box - pad} ${box - pad}
+            M ${box - pad} ${pad}
+            L ${pad} ${box - pad}
+          `,
+					stroke: color,
+					strokeWidth,
+					strokeLinecap: "round",
+					fill: "none",
+				},
+			],
+		],
+	];
+}

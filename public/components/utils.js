@@ -1,9 +1,10 @@
 import { dataR, getProps, R } from "./index.js";
+
 import {
 	EDGEMAP,
+	registery,
 	getNodeLocation,
 	NODEAT,
-	registery,
 	store,
 } from "../state.js";
 import { dom } from "../dom.js";

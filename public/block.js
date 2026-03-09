@@ -82,6 +82,22 @@ let R = (location, id) => (key) => ({
 	subscribe: (fn) => subscribeToId(id, [key], fn),
 });
 
+let colorBars = (node, btn = ["span"]) => {
+	let r = R(getNodeLocation(node.id), node.id);
+	let color = r("color");
+	let setcolorfn = (i) => () => color.next(i + "");
+	let colorbuttons = [
+		".color-bar",
+		...[1, 2, 3, 4, 5, 6].map((i) =>
+			button("x", setcolorfn(i), {
+				style: "background-color: var(--b" + i + ");",
+			})
+		),
+		btn,
+	];
+	return colorbuttons;
+};
+
 let groupTitleLabel = (group) => {
 	let location = getNodeLocation(group.id);
 	let r = R(location, group.id);
@@ -113,25 +129,125 @@ let groupTitleLabel = (group) => {
 
 	return title;
 };
-let colorBars = (node, btn = ["span"]) => {
-	let r = R(getNodeLocation(node.id), node.id);
-	let color = r("color");
-	let setcolorfn = (i) => () => color.next(i + "");
-	let colorbuttons = [
-		".color-bar",
-		...[1, 2, 3, 4, 5, 6].map((i) =>
-			button("x", setcolorfn(i), {
-				style: "background-color: var(--b" + i + ");",
-			})
-		),
-		btn,
-	];
-	return colorbuttons;
-};
 
 // ------------------
 // Block and Group El
 // ------------------
+//
+export function GroupElement(group) {
+	// Convert From  v3 to v2 incase
+	let r = R(getNodeLocation(group.id), group.id);
+	let anchored = [];
+
+	let left = r("x");
+	let top = r("y");
+	let color = r("color");
+	let height = r("height");
+	let width = r("width");
+
+	let style = memo(
+		() => CSSTransform(left, top, width, height) + Color(color.value()),
+		[left, top, width, height, color],
+	);
+
+	let onstart = (e) => {
+		state.selected.next([]);
+		//
+		// saves this location for undo
+		store.startBatch();
+
+		if (!e.metaKey) {
+			store.get(["data", "nodes"]).forEach((e, i) => {
+				let fn = isRectIntersecting;
+				if (e.type == "group") fn = isRectContained;
+
+				if (
+					fn(
+						Transform(
+							left.value(),
+							top.value(),
+							width.value(),
+							height.value(),
+						),
+						e,
+					)
+				) {
+					let item = {
+						blockLocation: ["data", "nodes", i],
+						position: { x: e.x, y: e.y },
+						offset: {
+							x: e.x - left.value(),
+							y: e.y - top.value(),
+						},
+					};
+					anchored.push(item);
+				}
+			});
+
+			anchored.forEach((e, i) => {
+				store.tr(e.blockLocation, "set", ["x", e.position.x]);
+				store.tr(e.blockLocation, "set", ["y", e.position.y]);
+			});
+		} else {
+			left.next(left.value());
+			top.next(top.value());
+			width.next(width.value());
+			height.next(height.value());
+		}
+
+		store.endBatch();
+		store.pauseTracking();
+	};
+	let onend = () => {
+		store.resumeTracking();
+		anchored = [];
+	};
+
+	let remove = () => {
+		removeNode(group);
+		el.remove();
+	};
+
+	let removeButton = () => {
+		let click = reactive(0);
+		let words = ["delete", "DELETE", "DELETE!", "DELEETEEEE!!!!"];
+		let onclick = () => {
+			click.next((e) => e + 1);
+			if (click.value() == words.length) remove();
+		};
+		return button(memo(() => words[click.value()], [click]), onclick);
+	};
+
+	let edges = resizers(left, top, width, height, { onstart, onend });
+	let connectionEdges = connectors(group, left, top, width, height);
+	let el = dom(
+		".draggable.group",
+		{ style },
+		colorBars(group, removeButton()),
+		groupTitleLabel(group),
+		...edges,
+		...connectionEdges,
+	);
+
+	setTimeout(() => {
+		drag(el, {
+			onstart,
+			onend,
+			set_position: (x, y) => {
+				left.next(x);
+				top.next(y);
+
+				anchored.forEach((e) => {
+					store.tr(e.blockLocation, "set", ["x", x + e.offset.x]);
+					store.tr(e.blockLocation, "set", ["y", y + e.offset.y]);
+				});
+			},
+		});
+	}, 50);
+
+	return el;
+}
+
 export function BlockElement(block) {
 	// Convert From  v3 to v2 incase
 	block = convertBlockToV3(block);
@@ -252,119 +368,6 @@ export function BlockElement(block) {
 			set_position: (x, y) => {
 				left.next(x);
 				top.next(y);
-			},
-		});
-	}, 50);
-
-	return el;
-}
-export function GroupElement(group) {
-	// Convert From  v3 to v2 incase
-	let r = R(getNodeLocation(group.id), group.id);
-	let anchored = [];
-
-	let left = r("x");
-	let top = r("y");
-	let color = r("color");
-	let height = r("height");
-	let width = r("width");
-
-	let style = memo(
-		() => CSSTransform(left, top, width, height) + Color(color.value()),
-		[left, top, width, height, color],
-	);
-
-	let onstart = (e) => {
-		state.selected.next([]);
-		//
-		// saves this location for undo
-		store.startBatch();
-
-		if (!e.metaKey) {
-			store.get(["data", "nodes"]).forEach((e, i) => {
-				let fn = isRectIntersecting;
-				if (e.type == "group") fn = isRectContained;
-
-				if (
-					fn(
-						Transform(
-							left.value(),
-							top.value(),
-							width.value(),
-							height.value(),
-						),
-						e,
-					)
-				) {
-					let item = {
-						blockLocation: ["data", "nodes", i],
-						position: { x: e.x, y: e.y },
-						offset: {
-							x: e.x - left.value(),
-							y: e.y - top.value(),
-						},
-					};
-					anchored.push(item);
-				}
-			});
-
-			anchored.forEach((e, i) => {
-				store.tr(e.blockLocation, "set", ["x", e.position.x]);
-				store.tr(e.blockLocation, "set", ["y", e.position.y]);
-			});
-		} else {
-			left.next(left.value());
-			top.next(top.value());
-			width.next(width.value());
-			height.next(height.value());
-		}
-
-		store.endBatch();
-		store.pauseTracking();
-	};
-	let onend = () => {
-		store.resumeTracking();
-		anchored = [];
-	};
-
-	let remove = () => {
-		removeNode(group);
-		el.remove();
-	};
-
-	let removeButton = () => {
-		let click = reactive(0);
-		let words = ["delete", "DELETE", "DELETE!", "DELEETEEEE!!!!"];
-		let onclick = () => {
-			click.next((e) => e + 1);
-			if (click.value() == words.length) remove();
-		};
-		return button(memo(() => words[click.value()], [click]), onclick);
-	};
-
-	let edges = resizers(left, top, width, height, { onstart, onend });
-	let connectionEdges = connectors(group, left, top, width, height);
-	let el = dom(
-		".draggable.group",
-		{ style },
-		colorBars(group, removeButton()),
-		groupTitleLabel(group),
-		...edges,
-		...connectionEdges,
-	);
-
-	setTimeout(() => {
-		drag(el, {
-			onstart,
-			onend,
-			set_position: (x, y) => {
-				left.next(x);
-				top.next(y);
-
-				anchored.forEach((e) => {
-					store.tr(e.blockLocation, "set", ["x", x + e.offset.x]);
-					store.tr(e.blockLocation, "set", ["y", y + e.offset.y]);
-				});
 			},
 		});
 	}, 50);

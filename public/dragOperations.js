@@ -13,6 +13,7 @@ import {
 	store,
 } from "./state.js";
 import { duplicateBlock } from "./registery.js";
+
 import { addEdge } from "./state.js";
 
 let anchor = undefined;

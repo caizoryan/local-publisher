@@ -3,13 +3,14 @@ import { dom } from "./dom.js";
 import {
 	addEdge,
 	addNode,
-	registery,
 	removeEdge,
 	removeNode,
 	state,
 	store,
 	try_set_channel,
+	registery
 } from "./state.js";
+
 import { Keymanager } from "./keymanager.js";
 import { sidebar } from "./sidebar.js";
 import { dragOperations } from "./dragOperations.js";

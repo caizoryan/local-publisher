@@ -5,10 +5,21 @@ import { notificationpopup } from "./notification.js";
 import { mountContainer } from "./script.js";
 import { unwrap } from "./block.js";
 import { createStore } from "./store.js";
-import { svgline, svgrect, svgrectnormal } from "./svg.js";
+import { makeLineArrowMarker, makeXMarker, svgline, svgrect, svgrectnormal } from "./svg.js";
 import { dragTransforms } from "./dragOperations.js";
 import { mountBoundingBox } from "./bigBoundingBox.js";
+
 import { createRegistery } from "./registery.js";
+
+let stringify = JSON.stringify;
+
+
+// ++++++++++++++++++++++++
+// ------------------------
+// +; COMPONENT REGISTRATION
+// ------------------------
+// ++++++++++++++++++++++++
+
 import {
 	add,
 	ApplyFunction,
@@ -39,152 +50,8 @@ import { Circle, ImageElement, Line, Text } from "./components/shapes.js";
 import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
 
-let stringify = JSON.stringify;
-export let mouse = reactive({ x: 0, y: 0 });
-export let state = {
-	authSlug: reactive(""),
-	authKey: undefined,
-	me: {},
-
-	// 'connect' | 'resize'
-	mode: reactive("pan"),
-	snapping: reactive(50),
-
-	propertybarOpen: reactive("true"),
-	sidebarOpen: reactive(false),
-	helpOpen: reactive(false),
-	making_node: "circle",
-
-	recentSlugs: reactive([]),
-	currentSlug: reactive("are-na-canvas"),
-	selected: reactive([]),
-	selectedConnection: reactive([]),
-	// could make this to make multiple pins
-	pinnedNode: reactive(0),
-
-	containerMouseX: reactive(0),
-	containerMouseY: reactive(0),
-
-	block_connection_buffer: undefined,
-	selected_connection: undefined,
-	connectionFromX: reactive(0),
-	connectionFromY: reactive(0),
-	connectionToX: reactive(0),
-	connectionToY: reactive(0),
-
-	updated: reactive(false),
-	canvasX: reactive(0),
-	canvasY: reactive(0),
-	canvasScale: reactive(1),
-
-	dimensions: reactive(100000),
-	holdingCanvas: reactive(false),
-	canceled: reactive(false),
-
-	trackpad_movement: true,
-	last_history: [],
-	dot_book: undefined,
-	moving_timeout: undefined,
-
-	reRenderEdges: reactive(0),
-};
-
-export let snap = (v) => round(v, state.snapping.value());
-
-// subscribe to currentSlug to update url
-state.currentSlug.subscribe((slug) => history.pushState("", "", "#" + slug));
-
-export let store = createStore({
-	data: { nodes: [], edges: [] },
-	nodeHash: {},
-	buffers: {},
-	edgeMap: {},
-	// will be stored as {[name] : {value, sourceId}}
-	variables: {},
-});
-
-function makeLineArrowMarker(
-	size = 1,
-	id = "arrow",
-	color = "black",
-	strokeWidth = 2,
-) {
-	const box = 10 * size;
-	const cx = box;
-	const cy = box / 2;
-	const arm = 4 * size;
-
-	return [
-		"defs",
-		{},
-		[
-			"marker",
-			{
-				id,
-				markerWidth: box + 5 * size,
-				markerHeight: box + 5 * size,
-				refX: cx,
-				refY: cy,
-				orient: "auto",
-				markerUnits: "strokeWidth",
-			},
-			[
-				"path",
-				{
-					d: `
-            M ${cx - arm} ${cy - arm}
-            L ${cx} ${cy}
-            L ${cx - arm} ${cy + arm}
-          `,
-					stroke: color,
-					strokeWidth,
-					strokeLinecap: "round",
-					strokeLinejoin: "round",
-					fill: "none",
-				},
-			],
-		],
-	];
-}
-
-function makeXMarker(size = 1, id = "x", color = "black", strokeWidth = 2) {
-	const box = 10 * size;
-	const pad = 2 * size;
-
-	return [
-		"defs",
-		{},
-		[
-			"marker",
-			{
-				id,
-				markerWidth: box,
-				markerHeight: box,
-				refX: box / 2,
-				refY: box / 2,
-				orient: "auto",
-				markerUnits: "strokeWidth",
-			},
-			[
-				"path",
-				{
-					d: `
-            M ${pad} ${pad}
-            L ${box - pad} ${box - pad}
-            M ${box - pad} ${pad}
-            L ${pad} ${box - pad}
-          `,
-					stroke: color,
-					strokeWidth,
-					strokeLinecap: "round",
-					fill: "none",
-				},
-			],
-		],
-	];
-}
-
 export let registery = createRegistery();
+
 registery.register(
 	"canvas",
 	{
@@ -278,6 +145,84 @@ registery.register(
 	},
 );
 
+
+
+// ++++++++++++++++++++++++
+// ------------------------
+// +; STATE
+// ------------------------
+// ++++++++++++++++++++++++
+export let mouse = reactive({ x: 0, y: 0 });
+export let state = {
+	authSlug: reactive(""),
+	authKey: undefined,
+	me: {},
+
+	// 'connect' | 'resize'
+	mode: reactive("pan"),
+	snapping: reactive(50),
+
+	propertybarOpen: reactive("true"),
+	sidebarOpen: reactive(false),
+	helpOpen: reactive(false),
+	making_node: "circle",
+
+	recentSlugs: reactive([]),
+	currentSlug: reactive("are-na-canvas"),
+	selected: reactive([]),
+	selectedConnection: reactive([]),
+	// could make this to make multiple pins
+	pinnedNode: reactive(0),
+
+	containerMouseX: reactive(0),
+	containerMouseY: reactive(0),
+
+	block_connection_buffer: undefined,
+	selected_connection: undefined,
+	connectionFromX: reactive(0),
+	connectionFromY: reactive(0),
+	connectionToX: reactive(0),
+	connectionToY: reactive(0),
+
+	updated: reactive(false),
+	canvasX: reactive(0),
+	canvasY: reactive(0),
+	canvasScale: reactive(1),
+
+	dimensions: reactive(100000),
+	holdingCanvas: reactive(false),
+	canceled: reactive(false),
+
+	trackpad_movement: true,
+	last_history: [],
+	dot_book: undefined,
+	moving_timeout: undefined,
+
+	reRenderEdges: reactive(0),
+};
+
+export let snap = (v) => round(v, state.snapping.value());
+
+// subscribe to currentSlug to update url
+state.currentSlug.subscribe((slug) => history.pushState("", "", "#" + slug));
+
+// ++++++++++++++++++++++++
+// ------------------------
+// +; STORE
+// ------------------------
+// ++++++++++++++++++++++++
+//
+export let store = createStore({
+	data: { nodes: [], edges: [] },
+	nodeHash: {},
+	buffers: {},
+	edgeMap: {},
+	// will be stored as {[name] : {value, sourceId}}
+	variables: {},
+});
+
+
+
 store.subscribe(["data", "nodes"], (e) => {
 	// because we said children updates are true,
 	// then it will check what in children was updated and pass that as a ref
@@ -295,9 +240,11 @@ store.subscribe(["data", "nodes"], (e) => {
 	if (yes) state.reRenderEdges.next((e) => e + .0001);
 }, true);
 
-// ~~~~~~~~~~~
-// STORE UTILS
-// ~~~~~~~~~~~
+// ----------------------
+// ~~~~~~~~~~~~~~~~~~~~~~
+// +; STORE UTILS
+// ~~~~~~~~~~~~~~~~~~~~~~
+// ----------------------
 export let NODES = ["data", "nodes"];
 export let EDGES = ["data", "edges"];
 export let NODEHASH = ["data", "nodeHash"];
@@ -369,9 +316,6 @@ export let addNode = (node) => {
 	updateNodeHash();
 
 	setTimeout(() => {
-		// this can be called like a mount or smth?
-		// will check if data is initialized, if not will do that
-		//
 		let el = registery.mount(node);
 		if (el) document.querySelector(".container").appendChild(el);
 	}, 10);
