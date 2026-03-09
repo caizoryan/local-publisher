@@ -37,6 +37,7 @@ import { V } from "./schema.js";
 
 import { Circle, ImageElement, Line, Text } from "./components/shapes.js";
 import { Fold, FoldTyper } from "./components/fold.js";
+import { GroupElement } from "./components/group.js";
 
 let stringify = JSON.stringify;
 export let mouse = reactive({ x: 0, y: 0 });
@@ -197,6 +198,13 @@ registery.register(
 		return { draw: ["Group", props] };
 	},
 );
+
+registery.register(
+	"group",
+	{ fold: V.number(0) },
+	{},
+	GroupElement,
+	(props) => ({}));
 
 registery.register(
 	"physariumCanvas",
