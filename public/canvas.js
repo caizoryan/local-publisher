@@ -85,9 +85,19 @@ let cmykToRGB = (C, M, Y, K) => {
 };
 
 export const renderPDFCanvas = (node, inputs) => {
-	let pageWidth = 612;
-	let pageHeight = 792;
 	let paused = true;
+
+	let r = dataR(getNodeLocation(node.id), node.id);
+	let pageWidth = r('width')
+	let pageHeight = r('height')
+
+	pageWidth.next(
+		pageWidth.value() || 612
+	)
+
+	pageHeight.next(
+		pageHeight.value() || 792
+	)
 
 	// let inputs = reactive({});
 	// // from for this node
@@ -157,7 +167,7 @@ export const renderPDFCanvas = (node, inputs) => {
 
 		const doc = new PDFDocument({
 			layout: "landscape",
-			size: [pageWidth, pageHeight],
+			size: [pageWidth.value(), pageHeight.value()],
 			margins: 0,
 		});
 
@@ -184,7 +194,7 @@ export const renderPDFCanvas = (node, inputs) => {
 		};
 
 		let stream = doc.pipe(blobStream());
-		doc.rect(0, 0, pageHeight, pageWidth);
+		doc.rect(0, 0, pageHeight.value(), pageWidth.value());
 		doc.fill([0, 0, 0, 5]);
 		fns.Group({ draw: drawables })(doc);
 		doc.end();
@@ -209,6 +219,9 @@ export const renderPDFCanvas = (node, inputs) => {
 		requestAnimationFrame(RAFDraw);
 	}
 
+
+	pageWidth.subscribe(() => next = true);
+	pageHeight.subscribe(() => next = true);
 	inputs.subscribe(() => next = true);
 	requestAnimationFrame(RAFDraw);
 

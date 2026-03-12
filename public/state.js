@@ -33,6 +33,7 @@ import {
 	LogObject,
 	MathComps,
 	NamedObject,
+	NullObject,
 	Number,
 	ObjectExtracter,
 	ObjectLabeller,
@@ -42,6 +43,7 @@ import {
 	Slider,
 	Slider2D,
 	String,
+    ValueObjectExtracter,
 } from "./components/utils.js";
 import { physariumCanvas, renderCanvas, renderPDFCanvas } from "./canvas.js";
 import { V } from "./schema.js";
@@ -92,6 +94,8 @@ registery.register(
 	"pdfCanvas",
 	{
 		draw: V.array().collect(),
+		width: V.number(612),
+		height: V.number(792),
 	},
 	{},
 	renderPDFCanvas,
@@ -108,9 +112,12 @@ registery.register(Text);
 registery.register(Grid);
 registery.register(ObjectLabeller);
 registery.register(ObjectExtracter);
+registery.register(ValueObjectExtracter);
 registery.register(MathComps.add);
 registery.register(MathComps.sub);
 registery.register(MathComps.mul);
+registery.register(MathComps.floor);
+registery.register(NullObject);
 registery.register(Slider);
 registery.register(Slider2D);
 registery.register(CreateFunction);

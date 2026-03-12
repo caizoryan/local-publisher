@@ -559,8 +559,9 @@ let Function = (node, inputs) => {
 			let values = Object.values(sorted);
 			values = values.filter((e) => e != undefined);
 
-			values = values.reduce((acc, v) => {
-				Object.entries(v).forEach(([k, v]) => acc[k] ? acc[k].push(v) : acc[k] = [v])
+			values = values.reduce((acc, vv) => {
+				Object.entries(vv).forEach(([k, v]) => acc[k] ? acc[k].push(v) : acc[k] = [v])
+				console.log(acc, vv)
 				return acc
 			}, {})
 
@@ -880,7 +881,39 @@ export let ReturnObject = {
 	},
 };
 
+export let NullObject = {
+	id: "null",
+	render: () => [dom(["span", "NULL"])],
+	inputs: "ANY",
+	outputs: {},
+	transform: (props) => ({}) 
+};
+
 export let MathComps = {
+	floor: {
+		id: "floor",
+		render:()=> [['span', 'floor']],
+		inputs: "ANY",
+		outputs: {},
+		transform: (props) => {
+			let added = {};
+
+			Object.entries(props).forEach(
+				([key, value]) => {
+					if (!value) return
+					if (typeof (value) == 'number') {
+						let sum = Math.floor(value)
+						added[key] = sum
+					}
+				}
+			);
+
+			return added;
+			// ({
+			// 		value: props.value.reduce((acc, v) => acc += v, 0),
+			// 	}),
+		},
+	},
 	add: {
 		id: "add",
 		render: add,
@@ -1077,6 +1110,19 @@ export const ObjectExtracter = {
 		if (!props || !internal || typeof internal.key != "string") return {};
 		const o = {};
 		o.value = props[internal.key];
+		return o;
+	},
+};
+
+export const ValueObjectExtracter = {
+	id: "ValueObjectGet",
+	render: objectExtractor,
+	inputs: "ANY",
+	outputs: {},
+	transform: (props, internal) => {
+		if (!props || !internal || typeof internal.key != "string" || typeof props.value != 'object') return {};
+		const o = {};
+		o.value = props.value[internal.key];
 		return o;
 	},
 };

@@ -257,7 +257,15 @@ export let FoldTyper = {
 			props.tracking,
 			props.stroke, props.fill, props.strokeWeight, props.bounding)
 
-		return { draw: ["Group", { 'draw': f }] }
+		return { 
+			draw: ["Group", { 'draw': f.draw }],
+			bounds: {
+				width: f.width,
+				height: f.height,
+				x: f.x,
+				y: f.y
+			}
+		}
 	}
 }
 
@@ -453,6 +461,9 @@ let word = (
 	bounding = 0,
 	spaceWidth = 25
 ) => {
+	let og_x = x
+	let og_y = y
+	let width, height=0
 	let letters = w
 		.split('')
 		.map(e => ({
@@ -473,6 +484,9 @@ let word = (
 					scale: [scale]
 				}
 			})
+
+			height = Math.max(box.height, height)
+
 			let lett = letter(
 				x, y,
 				e.width,
@@ -483,10 +497,16 @@ let word = (
 			)
 
 			x += box.width + tracking
+			width = x - og_x
 
 			return lett
 		})
-	return letters.flat()
+	return {
+		draw: letters.flat(),
+		x: og_x,
+		y: og_y,
+		width,height
+	}
 }
 
 function mirror(p, m) {
