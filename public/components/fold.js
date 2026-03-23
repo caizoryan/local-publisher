@@ -251,11 +251,15 @@ export let FoldTyper = {
 		}, {})
 
 
-		let f = word(props.string, props.x, props.y,
+		let f = word(
+			props.string, props.x, props.y,
 			map,
 			props.scale,
 			props.tracking,
-			props.stroke, props.fill, props.strokeWeight, props.bounding)
+			props.stroke, 
+			props.fill,
+			props.strokeWeight,
+			props.bounding)
 
 		return { 
 			draw: ["Group", { 'draw': f.draw }],
@@ -478,8 +482,9 @@ let word = (
 
 			if (!e.data) return
 			e = e.data
+			let w = e.width + (Math.random() * 7 - 3.5)
 			let { points, box } = letterPoints({
-				x, y, width: e.width, height: e.height, code: e.lines, transforms: {
+				x, y, width: w, height: e.height, code: e.lines, transforms: {
 					rotate: [e.rotate],
 					scale: [scale]
 				}
@@ -489,7 +494,7 @@ let word = (
 
 			let lett = letter(
 				x, y,
-				e.width,
+				w,
 				e.height,
 				e.lines,
 				{ rotate: [e.rotate], scale: [scale] },
