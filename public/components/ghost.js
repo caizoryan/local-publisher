@@ -8,7 +8,6 @@ import { dataR } from "./index.js";
 
 function ghostRenderer(node, i, updateOut) {
 	let r = dataR(getNodeLocation(node.id), node.id);
-	let _r = dataR(getNodeLocation(node.id), node.id, '_data');
 	let paragraphs = r("paragraphs");
 	let width = r("width");
 	let rotate = r("rotate");
@@ -91,8 +90,7 @@ function ghostRenderer(node, i, updateOut) {
 
 	let paper = dom(['div', {
 		style: memo(() => `
-			margin-left: 30px;
-			background-color: #6ecae7;
+			background-color: white;
 			border: 2px solid black;
 			width: ${width.value()}px;
 			height: ${height.value()}px;
