@@ -6,6 +6,111 @@ import { V } from "../schema.js";
 import { getNodeLocation } from "../state.js";
 import { dataR } from "./index.js";
 
+function ghostRenderer(node, i, updateOut) {
+	let r = dataR(getNodeLocation(node.id), node.id);
+	let _r = dataR(getNodeLocation(node.id), node.id, '_data');
+	let paragraphs = r("lines");
+	let width = r("width");
+	let rotate = r("rotate");
+	let height = r("height");
+
+	let currentSelected
+
+	let addLine = () => {
+		let l = paragraphs.value()
+		paragraphs.next([
+			...l,
+			{
+				x: Math.random()*500,
+				y: Math.random()*500,
+				text: "GRABLE GUCKING FORHBLASKJ"
+
+			}
+		])
+	}
+
+	let update = reactive(0)
+
+	let rotateEl = ['input.number', {
+		type: 'number',
+		value: rotate,
+		oninput: e => {
+			rotate.next(parseFloat(e.target.value))
+			updateOut()
+		}
+	}]
+
+
+	let paragraphRenderer = (text, x, y, width, height, pos = 0) => {
+		let el = dom(['.paragraph',
+			{
+				style: memo(() => `
+						position: absolute;
+						top: ${x.value()}px;
+						left: ${y.value()}px;
+				`, [x, y, height, width])
+			},
+			text
+		])
+
+		let setTop = v => {
+			y.next(v)
+			paragraphs.value()[i]['y'] = v
+			updateOut()
+			update.next(e => e + 1)
+		}
+
+		let setLeft = v => {
+			x.next(v)
+			paragraphs.value()[i]['x'] = v
+			updateOut()
+			update.next(e => e + 1)
+		}
+
+		setTimeout(() => {
+			drag(el, {
+				set_left: setLeft,
+				set_top: setTop
+			})
+		}, 150)
+
+		return el
+	}
+	let markers = memo(() => {
+		let paras = paragraphs.value().map((p, i) => {
+			let x = reactive(p.x)
+			let y = reactive(p.y)
+			let width = reactive(p.width)
+			let height = reactive(p.height)
+			let text = reactive(p.text)
+
+			return paragraphRenderer(text, x, y, width, height, i, 1)
+		})
+
+		return paras
+	}, [paragraphs])
+
+	let paper = dom(['div', {
+		style: memo(() => `
+			margin-left: 30px;
+			background-color: #6ecae7;
+			border: 2px solid black;
+			width: ${width.value() * scale.value()}px;
+			height: ${height.value() * scale.value()}px;
+		`, [height, width, scale])
+	}, ['svg', {
+		width: memo(() => width.value() * scale.value() - 2, [width, scale]),
+		height: memo(() => height.value() * scale.value(), [height, scale]),
+		}], markers,
+	])
+
+	return [
+		{ },
+		paper,
+		button("add", addLine),
+		rotateEl
+	];
+}
 
 export let Ghost = {
 	id: "ghost",
