@@ -13,7 +13,7 @@ function ghostRenderer(node, i, updateOut) {
 	let rotate = r("rotate");
 	let height = r("height");
 
-	let currentSelected
+	let currentSelected = reactive(0)
 
 	let addLine = () => {
 		let l = paragraphs.value()
@@ -38,6 +38,16 @@ function ghostRenderer(node, i, updateOut) {
 		}
 	}]
 
+	let currentText = memo(() => paragraphs.value()[currentSelected.value()].text, [currentSelected])
+
+	let currentTextEl = memo(() => ['textarea.string', {
+		value: rotate,
+		oninput: e => {
+			paragraphs.value()[currentSelected.value()].text = e.target.value
+			update.next(e => e+1)
+			updateOut()
+		}
+	}, currentText], [currentText])
 
 	let paragraphRenderer = (text, x, y, width, height,i, pos = 0) => {
 		let el = dom(['.paragraph',
@@ -46,27 +56,30 @@ function ghostRenderer(node, i, updateOut) {
 						position: absolute;
 						top: ${y.value()}px;
 						left: ${x.value()}px;
-				`, [x, y, height, width])
-			},
-			text
+
+						width: ${width.value()}px;
+						height: ${height.value()}px;
+						border: ${currentSelected.value() == i ? '1' : '0'}px solid red;
+					`, [x, y, height, width, currentSelected])
+				},
+				text
 		])
 
 		let setTop = v => {
 			y.next(v)
 			paragraphs.value()[i]['y'] = v
 			updateOut()
-			update.next(e => e + 1)
 		}
 
 		let setLeft = v => {
 			x.next(v)
 			paragraphs.value()[i]['x'] = v
 			updateOut()
-			update.next(e => e + 1)
 		}
 
 		setTimeout(() => {
 			drag(el, {
+				onstart: () => currentSelected.next(i),
 				set_left: setLeft,
 				set_top: setTop
 			})
@@ -86,7 +99,7 @@ function ghostRenderer(node, i, updateOut) {
 		})
 
 		return paras
-	}, [paragraphs])
+	}, [paragraphs, update])
 
 	let paper = dom(['div', {
 		style: memo(() => `
@@ -97,11 +110,12 @@ function ghostRenderer(node, i, updateOut) {
 		`, [height, width ])
 	}, markers ])
 
-	return [
+	return [[
+	'.layout', {style: 'display: flex;'}, 
 		paper,
-		button("add", addLine),
-		rotateEl
-	];
+		['.controls', {style: 'padding: 1em;width: 300px'}, 
+			button("add", addLine),
+			currentTextEl, ]]];
 }
 
 export let Ghost = {
