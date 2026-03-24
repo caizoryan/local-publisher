@@ -702,6 +702,7 @@ let drawCircle = (props) => (p) => {
 let availableFonts = [
 	"Times-Roman",
 	"Hermit",
+	'Courier',
 	"Oracle",
 	"Fungal",
 ];
@@ -715,12 +716,14 @@ let drawTextDocFn = (props) => (doc) => {
 	let text = props.text;
 	let fontSize = props.fontSize ? props.fontSize : 12;
 	let fontFamily = props.fontFamily;
+	let opacity = typeof props.opacity == 'number' ? props.opacity : 1 
 	// let stroke = props.stroke ? true : false;
 
 	if (props.fill) doc.fillColor(props.fill);
 	if (fontFamily && availableFonts.includes(fontFamily)) doc.font(fontFamily);
 	// if (props.stroke) doc.stroke(props.stroke);
 	doc.fontSize(fontSize);
+	doc.opacity(opacity)
 	doc.text(text, x, y, { width, height });
 
 	if (props.boundingBox) {
@@ -742,6 +745,7 @@ let drawText = (props) => (p) => {
 	let fontSize = props.fontSize ? props.fontSize : 12;
 	let fontWeight = props.fontWeight ? props.fontWeight : 300;
 	let fontFamily = props.fontFamily;
+	let opacity = typeof props.opacity == 'number' ? props.opacity : 1 
 	// let stroke = props.stroke ? true : false;
 
 	props.fill != undefined
@@ -764,6 +768,7 @@ let drawText = (props) => (p) => {
 		// p.textWeight(fontWeight);
 	// if (props.stroke) doc.stroke(props.stroke);
 	// p.textSize(fontSize);
+	p.drawingContext.globalAlpha = opacity
 	p.text(text, x, y, width, height);
 
 	if (props.boundingBox) {
@@ -772,6 +777,8 @@ let drawText = (props) => (p) => {
 		p.noFill();
 		p.rect(x, y, width, height);
 	}
+
+	p.drawingContext.globalAlpha = 1
 	// if (props.stroke) doc.fillAndStroke(props.fill, props.stroke);
 };
 
