@@ -52,6 +52,7 @@ import { Circle, HorizontalLine, ImageElement, Line, Text, VerticalLine } from "
 import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
 import { Ghost } from "./components/ghost.js";
+import { TypeGrid } from "./components/grid.js";
 
 export let registery = createRegistery();
 
@@ -110,7 +111,6 @@ registery.register(String);
 registery.register(ImageElement);
 registery.register(LogObject);
 registery.register(Text);
-registery.register(Grid);
 registery.register(ObjectLabeller);
 registery.register(ObjectExtracter);
 registery.register(ValueObjectExtracter);
@@ -135,6 +135,8 @@ registery.register(VerticalLine);
 registery.register(Fold);
 registery.register(FoldTyper);
 registery.register(Ghost);
+registery.register(Grid);
+registery.register(TypeGrid);
 registery.register(LineEditor);
 registery.register(NamedObject);
 
