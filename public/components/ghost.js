@@ -12,6 +12,7 @@ function ghostRenderer(node, i, updateOut) {
 	let residue = r("residue");
 	let width = r("width");
 	let fontFamily = r("textFontFamily");
+	let fontSize = r("fontSize");
 	let rotate = r("rotate");
 	let height = r("height");
 
@@ -27,21 +28,18 @@ function ghostRenderer(node, i, updateOut) {
 
 				width: 200,
 				height: 100,
-				text: "GRABLE GUCKING FORHBLASKJ"
+				text: "GRABLE GUCKING FORHBLASKJ",
 			}
 		])
 	}
 
-	let update = reactive(0)
+	let removeLine = () => {
+		let l = paragraphs.value()
+		l.splice(currentSelected.value(), 1)
+		paragraphs.next([ ...l ])
+	}
 
-	let rotateEl = ['input.number', {
-		type: 'number',
-		value: rotate,
-		oninput: e => {
-			rotate.next(parseFloat(e.target.value))
-			updateOut()
-		}
-	}]
+	let update = reactive(0)
 
 	let currentText = memo(() => paragraphs.value()[currentSelected.value()].text, [currentSelected])
 
@@ -64,12 +62,13 @@ function ghostRenderer(node, i, updateOut) {
 						position: absolute;
 						font-size: 11px;
 						font-family: ${fontFamily.value()};
+						font-size: ${fontSize.value()}px;
 						top: ${y.value()}px;
 						left: ${x.value()}px;
 						width: ${width.value()}px;
 						height: ${height.value()}px;
 						border: ${currentSelected.value() == i ? '1' : '0'}px solid red;
-					`, [x, y, height, width, currentSelected])
+					`, [x, y, height, width, currentSelected, fontFamily, fontSize])
 				},
 				text
 		])
@@ -186,7 +185,7 @@ function ghostRenderer(node, i, updateOut) {
 		['.controls', {style: 'padding: 1em;width: 300px'}, 
 			['.main-panel', 
 				button("add", addLine),
-				button("add", addLine)
+				button("remove", removeLine)
 			],
 				['.panel', {style: 'display: grid; grid-template-columns: 150px auto;'},
 					['span', 'WIDTH : '], inputNumber("width")
@@ -218,6 +217,7 @@ export let Ghost = {
 		textFontFamily: V.string('Times New Roman'),
 		annotationFontFamily: V.string('Hermit'),
 		fontSize: V.number(11),
+		leading: V.number(13),
 	},
 	outputs: {},
 	render: ghostRenderer,
@@ -246,8 +246,9 @@ export let Ghost = {
 					width: p.width,
 					height: p.height,
 					fill: 'black',
-					fontSize: 11,
+					fontSize: props.fontSize,
 					fontFamily: props.textFontFamily,
+					leading: props.leading,
 				}]), ...residues]		
 		}]
 		return { draw: f }

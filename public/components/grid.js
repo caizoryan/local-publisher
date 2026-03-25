@@ -27,6 +27,9 @@ export let TypeGrid = {
 		pageWidth: V.number(792),
 		pageHeight: V.number(612),
 
+		frame: V.number(0),
+		drawGrid: V.number(1)
+
 	},
 	outputs: {},
 	render: (node) => {
@@ -40,6 +43,7 @@ export let TypeGrid = {
 		let spreadHeight = r("spreadHeight");
 		let pageWidth = r("pageWidth");
 		let pageHeight = r("pageHeight");
+		// let frame = r("frame");
 
 		let style = memo(() => `
 			position: absolute;
@@ -84,63 +88,63 @@ export let TypeGrid = {
 		})
 
 		let crops = [
-	['line', {
-		x1: g.leftPadding-10, y1: g.topPadding,
-		x2: g.leftPadding-3,  y2: g.topPadding,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding,  y1: g.topPadding-10,
-		x2:g.leftPadding,  y2: g.topPadding-3,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding+g.props.spreadWidth + 3, y1:g.topPadding,
-		x2: g.leftPadding+g.props.spreadWidth + 10, y2: g.topPadding,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding+g.props.spreadWidth, y1: g.topPadding-10,
-		x2: g.leftPadding+g.props.spreadWidth, y2: g.topPadding-3,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1:g.leftPadding +g.props.spreadWidth, 
-		y1:g.topPadding+ g.props.spreadHeight + 3,
-		x2:g.leftPadding+ g.props.spreadWidth, 
-		y2:g.topPadding+ g.props.spreadHeight + 10,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding+g.props.spreadWidth + 3, 
-		y1: g.topPadding+g.props.spreadHeight,
-		x2: g.leftPadding+g.props.spreadWidth + 10,
-		y2: g.topPadding+g.props.spreadHeight,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding-10, 
-		y1:g.topPadding+ g.props.spreadHeight,
-		x2: g.leftPadding-3,
-		y2: g.topPadding+g.props.spreadHeight,
-		stroke: 'black',
-		"stroke-width": 1
-	}],
-	['line', {
-		x1: g.leftPadding, 
-		y1: g.topPadding+g.props.spreadHeight + 3,
-		x2: g.leftPadding,
-		y2: g.topPadding+g.props.spreadHeight + 10,
-		stroke: 'black',
-		"stroke-width": 1
-	}]
-]
+		['line', {
+			x1: g.leftPadding-10, y1: g.topPadding,
+			x2: g.leftPadding-3,  y2: g.topPadding,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding,  y1: g.topPadding-10,
+			x2:g.leftPadding,  y2: g.topPadding-3,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding+g.props.spreadWidth + 3, y1:g.topPadding,
+			x2: g.leftPadding+g.props.spreadWidth + 10, y2: g.topPadding,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding+g.props.spreadWidth, y1: g.topPadding-10,
+			x2: g.leftPadding+g.props.spreadWidth, y2: g.topPadding-3,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1:g.leftPadding +g.props.spreadWidth, 
+			y1:g.topPadding+ g.props.spreadHeight + 3,
+			x2:g.leftPadding+ g.props.spreadWidth, 
+			y2:g.topPadding+ g.props.spreadHeight + 10,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding+g.props.spreadWidth + 3, 
+			y1: g.topPadding+g.props.spreadHeight,
+			x2: g.leftPadding+g.props.spreadWidth + 10,
+			y2: g.topPadding+g.props.spreadHeight,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding-10, 
+			y1:g.topPadding+ g.props.spreadHeight,
+			x2: g.leftPadding-3,
+			y2: g.topPadding+g.props.spreadHeight,
+			stroke: 'black',
+			"stroke-width": 1
+		}],
+		['line', {
+			x1: g.leftPadding, 
+			y1: g.topPadding+g.props.spreadHeight + 3,
+			x2: g.leftPadding,
+			y2: g.topPadding+g.props.spreadHeight + 10,
+			stroke: 'black',
+			"stroke-width": 1
+		}]
+		]
 		let cols = [...rcols, ...vcols]
 
 		let svg = ['svg', {
@@ -229,8 +233,7 @@ export let TypeGrid = {
 				width: e.w,
 				height: e.h,
 				stroke: 'black',
-				strokeWeight: 2,
-				fill: '#fff0'
+				strokeWeight: .1,
 			}]
 		})
 
@@ -241,16 +244,59 @@ export let TypeGrid = {
 				width: e.w,
 				height: e.h,
 				stroke: 'black',
-				strokeWeight: 2,
-				fill: '#fff0'
+				strokeWeight: .1,
 			}]
 		})
+
+		let frame = [
+			['Rect', {
+				x: 0,
+				y: 0,
+				width: g.leftPadding,
+				height: g.props.pageHeight,
+				fill: 'black',
+			} ],
+
+			['Rect', {
+				x: 0,
+				y: 0,
+				width: g.props.pageWidth,
+				height: g.topPadding,
+				fill: 'black',
+			} ],
+
+			['Rect', {
+				x: g.leftPadding+g.props.spreadWidth,
+				y: 0,
+				width: g.leftPadding,
+				height: g.props.pageHeight,
+				fill: 'black',
+			} ],
+
+			['Rect', {
+				y: g.topPadding+g.props.spreadHeight,
+				x: 0,
+				width: g.props.pageWidth,
+				height: g.topPadding,
+				fill: 'black',
+			} ]
+		]
+
+		if (!props.frame) {
+			frame=[]
+		}
+
+		if (!props.drawGrid) {
+			rcols = []
+			vcols = []
+		}
 
 		let f = ['Group', {
 			draw: [
 				...crops,
 				...rcols,
 				...vcols,
+				...frame,
 			]		
 		}]
 

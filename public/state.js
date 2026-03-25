@@ -45,7 +45,7 @@ import {
 	String,
     ValueObjectExtracter,
 } from "./components/utils.js";
-import { physariumCanvas, renderCanvas, renderPDFCanvas } from "./canvas.js";
+import { physariumCanvas, renderCanvas, renderCanvasSpreads, renderPDFCanvas } from "./canvas.js";
 import { V } from "./schema.js";
 
 import { Circle, HorizontalLine, ImageElement, Line, Text, VerticalLine } from "./components/shapes.js";
@@ -65,6 +65,21 @@ registery.register(
 	},
 	{},
 	renderCanvas,
+	(props) => {
+		return { draw: ["Group", props] };
+	},
+);
+
+registery.register(
+	"canvasCollector",
+	{
+		draw: V.array().collect(),
+		width: V.number(612),
+		height: V.number(792),
+		index: V.number(0),
+	},
+	{},
+	renderCanvasSpreads,
 	(props) => {
 		return { draw: ["Group", props] };
 	},

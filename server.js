@@ -114,7 +114,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use('/', express.static(path.join(path.join(process.cwd()), 'public')))
 
 
-app.get("/fs/:path", get_path);
+app.get("/fs/*", get_path);
 app.post("/fs/:path", write_path);
 
 const port = 8888;

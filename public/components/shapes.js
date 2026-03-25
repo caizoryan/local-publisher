@@ -63,14 +63,18 @@ function imageToUri(url, callback) {
 	};
 }
 
+export let imageLibrary = {
+
+}
+
 export let ImageRender = (node, ins, updateOut) => {
 	let r = dataR(getNodeLocation(node.id), node.id);
 	let key = r("src");
 	let imageData = r("image");
 
-	imageData.subscribe(() => {
-		updateOut();
-	});
+	imageData.next('')
+
+
 
 	// TODO:
 	// maybe set it up in such a way
@@ -79,11 +83,17 @@ export let ImageRender = (node, ins, updateOut) => {
 	// and data is just a link rather than stringified entire image
 	// and then if in current draw cycle, image isn't loaded,
 	// it will just wait for next cycle
-	let update = () => {
-		imageToUri(key.value(), (v) => imageData.next(v));
-	};
+	// let update = () => {
+	// 	imageToUri(key.value(), (v) => imageData.next(v));
+	// };
 
-	key.subscribe(update);
+	key.subscribe(() =>{
+		imageLibrary[key.value()] = new Image()
+		imageLibrary[key.value()].src = key.value()
+	});
+
+	imageLibrary[key.value()] = new Image()
+	imageLibrary[key.value()].src = key.value()
 
 	let el = ["input", {
 		type: "text",

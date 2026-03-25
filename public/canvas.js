@@ -12,6 +12,7 @@ import { blobStream } from "./blob-stream.js";
 import { PDFDocument } from "./pdfkit.standalone.js";
 import * as PDFJS from "https://esm.sh/pdfjs-dist";
 import * as PDFWorker from "https://esm.sh/pdfjs-dist/build/pdf.worker.min";
+import { imageLibrary } from "./components/shapes.js";
 
 export let pinnedCanvas = dom([".pinned"]);
 
@@ -62,6 +63,8 @@ export let dataR = (location, id) => (key) => ({
 let fontBuffer;
 let oracleBuffer;
 let fungalBuffer;
+let affairsBuffer;
+let triptychBuffer;
 
 fetch(`./font.otf`).then((res) => res.arrayBuffer()).then((res) =>
 	fontBuffer = res
@@ -75,6 +78,9 @@ fetch(`./oracle.otf`).then((res) => res.arrayBuffer()).then((res) => {
 fetch(`./fungal.ttf`).then((res) => res.arrayBuffer()).then((res) =>
 	fungalBuffer = res
 );
+
+fetch('./fonts/AffairsTest-Italic.otf').then((res) => res.arrayBuffer()).then(res => affairsBuffer=res)
+fetch('./fonts/Triptych-TRIAL-Italick.otf').then((res) => res.arrayBuffer()).then(res => triptychBuffer=res)
 
 let cmykToRGB = (C, M, Y, K) => {
 	var r = 255 * (1 - C) * (1 - K);
@@ -173,11 +179,14 @@ export const renderPDFCanvas = (node, inputs) => {
 
 		doc.registerFont("Oracle", oracleBuffer);
 		doc.registerFont("Fungal", fungalBuffer);
+		doc.registerFont("Affairs Test", affairsBuffer);
+		doc.registerFont("Triptych TRIAL", triptychBuffer);
 		doc.registerFont("Hermit", fontBuffer);
 
 		let fns = {
 			"Circle": drawCircleDocFn,
 			"Quad": drawQuadDocFn,
+			"Rect": drawRectDocFn,
 			"Text": drawTextDocFn,
 			"Image": drawImageDocFn,
 			"Line": drawLineDocFn,
@@ -195,7 +204,7 @@ export const renderPDFCanvas = (node, inputs) => {
 
 		let stream = doc.pipe(blobStream());
 		doc.rect(0, 0, pageHeight.value(), pageWidth.value());
-		doc.fill([0, 0, 0, 5]);
+		doc.fill([0, 0, 0, 0]);
 		fns.Group({ draw: drawables })(doc);
 		doc.end();
 		stream.on(
@@ -235,6 +244,7 @@ export const renderPDFCanvas = (node, inputs) => {
 		canvas,
 	];
 };
+
 
 export const renderCanvas = (node, inputs) => {
 	let paused = false;
@@ -282,24 +292,7 @@ export const renderCanvas = (node, inputs) => {
 	let draw = (drawables, canvas) => {
 		if (drawables.length == 0) return;
 
-		let fns = {
-			"Circle": drawCircle,
-			"Quad": drawQuad,
-			"Rect": drawRect,
-			"Text": drawText,
-			"Image": drawImageDocFn,
-			"Line": drawLine,
-			"Group": (props) => (p) => {
-				let drawables = props.draw ? props.draw : [];
-
-				drawables.forEach((fn) => {
-					if (!fn) return;
-					typeof fns[fn[0]] == "function"
-						? fns[fn[0]](fn[1])(p)
-						: console.log("ERROR: Neither a fn nor a key");
-				});
-			},
-		};
+		let fns = canvasfns;
 
 		p.background(250);
 		// console.log("WHAT THE FUCK");
@@ -329,6 +322,7 @@ export const renderCanvas = (node, inputs) => {
 	}
 
 	inputs.subscribe(() => next = true);
+	
 	setTimeout(() => {
 		requestAnimationFrame(RAFDraw);
 	}, 150);
@@ -338,6 +332,99 @@ export const renderCanvas = (node, inputs) => {
 		button("PIN", setPinned),
 	];
 };
+
+export const renderCanvasSpreads = (node, inputs) => {
+	let paused = false;
+
+	let isPinned = memo(() => state.pinnedNode.value() == node.id, [
+		state.pinnedNode,
+	]);
+
+	let setPinned = () => {
+		state.pinnedNode.next(node.id);
+		next = true;
+	};
+
+	let r = dataR(getNodeLocation(node.id), node.id);
+	let index = r('index')
+	let pageWidth = r('width')
+	let pageHeight = r('height')
+
+	pageWidth.next(
+		pageWidth.value() || 612
+	)
+
+	pageHeight.next(
+		pageHeight.value() || 792
+	)
+
+	let canvas = dom([".canvas"]);
+
+	let p;
+	memo(() => {
+		if (p) p.resizeCanvas(pageHeight.value(), pageWidth.value());
+	}, [pageWidth, pageHeight])
+	let init = (pp) => {
+		p = pp;
+		p.disableFriendlyErrors = true;
+		p.setup = () => {
+			p.createCanvas(pageHeight.value(), pageWidth.value());
+			// p.background(252, 255, 0);
+		};
+	};
+
+	setTimeout(() => {
+		new p5(init, canvas);
+	}, 150);
+
+	let draw = (drawables, canvas) => {
+		if (drawables.length == 0) return;
+
+
+		p.background(250);
+		// console.log("WHAT THE FUCK");
+
+		if (isPinned.value()) {
+			console.log("IS PINNED!");
+			pinned.fill(250)
+			pinned.stroke(0)
+			pinned.rect(0, 0, pageHeight.value(), pageWidth.value());
+			canvasfns.Group({ draw: drawables })(pinned);
+			// return;
+		}
+
+		canvasfns.Group({ draw: drawables })(p);
+	};
+
+	// wrap this in a RAF
+	let next = false;
+	function RAFDraw() {
+		if (next && !paused) {
+			// sort these into drawables and properties vibes (props can be width/height...)
+			let i = inputs.value();
+			if (i && i.draw && Array.isArray(i.draw)){
+				console.log(i.draw, i.draw[index.value()])
+				draw([i.draw[index.value()]])
+			}
+			next = false;
+		}
+		requestAnimationFrame(RAFDraw);
+	}
+
+	inputs.subscribe(() => next = true);
+	index.subscribe(() => next=true)
+	setTimeout(() => {
+		requestAnimationFrame(RAFDraw);
+	}, 150);
+
+	return [
+		canvas,
+		button("PIN", setPinned),
+		button("prev", () => index.next(index.value() - 1)),
+		button("next", () => index.next(index.value() + 1))
+	];
+};
+
 
 export const physariumCanvas = (node, inputs, updateOut) => {
 	let container = [".p5"];
@@ -705,6 +792,8 @@ let availableFonts = [
 	'Courier',
 	"Oracle",
 	"Fungal",
+	"Affairs Test",
+	"Triptych TRIAL"
 ];
 
 let drawTextDocFn = (props) => (doc) => {
@@ -716,6 +805,7 @@ let drawTextDocFn = (props) => (doc) => {
 	let text = props.text;
 	let fontSize = props.fontSize ? props.fontSize : 12;
 	let fontFamily = props.fontFamily;
+	let lineGap = props.leading ?  props.leading - fontSize : 0;
 	let opacity = typeof props.opacity == 'number' ? props.opacity : 1 
 	// let stroke = props.stroke ? true : false;
 
@@ -724,7 +814,7 @@ let drawTextDocFn = (props) => (doc) => {
 	// if (props.stroke) doc.stroke(props.stroke);
 	doc.fontSize(fontSize);
 	doc.opacity(opacity)
-	doc.text(text, x, y, { width, height });
+	doc.text(text, x, y, { width, height, lineGap });
 
 	if (props.boundingBox) {
 		doc.rect(x, y, width, height);
@@ -745,7 +835,11 @@ let drawText = (props) => (p) => {
 	let fontSize = props.fontSize ? props.fontSize : 12;
 	let fontWeight = props.fontWeight ? props.fontWeight : 300;
 	let fontFamily = props.fontFamily;
+
+	let leading = props.leading ? props.leading : fontSize;
 	let opacity = typeof props.opacity == 'number' ? props.opacity : 1 
+
+  p.textLeading(leading);
 	// let stroke = props.stroke ? true : false;
 
 	props.fill != undefined
@@ -802,22 +896,31 @@ let drawImageDocFn = (props) => (doc) => {
 	doc.restore();
 };
 
-let drawImageCanvasFn = (props) => (ctx, canvas) => {
+let images = { }
+
+let drawImage = (props) => (p) => {
 	let x = props.x;
 	let y = props.y;
-	let image = props.image;
+	let image = props.src;
+
+	console.log('src', image, imageLibrary)
 
 	let width = props.width ? props.width : 100;
+	let img = imageLibrary[image]
+	if (!img){
+		imageLibrary[image] = new Image()
+		imageLibrary[image].src = image
+		return
+	}
 
-	if (!props.image) return;
-	if (props.fill) doc.fillColor(props.fill);
+	console.log(img)
+
 	const ratio = img.height / img.width;
-	const targetHeight = targetWidth * ratio;
-
-	canvas.width = targetWidth;
-	canvas.height = targetHeight;
-
-	ctx.drawImage(img, x, y, targetWidth, targetHeight);
+	console.log(img, ratio)
+	const targetHeight = width * ratio;
+	p.drawingContext.drawImage(img, x, y, width, targetHeight);
+	// console.log("DRWAING??")
+	// p.image(i, x, y, width, targetHeight);
 };
 
 let drawLineDocFn = (props) => (doc) => {
@@ -832,7 +935,7 @@ let drawLineDocFn = (props) => (doc) => {
 	// let y2 = end.y;
 
 	doc.save();
-	doc.lineWidth(props.strokeWeight);
+	if (props.strokeWeight) doc.lineWidth(props.strokeWeight);
 	doc.moveTo(points[0].x, points[0].y);
 	points.slice(1).filter((e) =>
 		e != undefined &&
@@ -864,9 +967,25 @@ let drawLine = (props) => (doc) => {
 	);
 };
 
+let drawRectDocFn = props => doc => {
+	doc.save();
+	if (props.strokeStyle) doc.dash(props.strokeStyle[0])
+	if (props.lineCap) doc.lineCap(props.lineCap)
+	if (props.lineJoin) doc.lineJoin(props.lineJoin)
+
+	if (props.strokeWeight) doc.lineWidth(props.strokeWeight);
+
+	doc.rect(props.x, props.y, props.width, props.height)
+
+	if (props.stroke && props.fill) doc.fillAndStroke(props.fill, props.stroke);
+	else if (props.stroke) doc.stroke(props.stroke);
+	else if (props.fill) doc.fill(props.fill);
+	doc.restore();
+}
 let drawQuadDocFn = (props) => (doc) => {
 	let points = props.points;
 	if (points.length < 2) return;
+	doc.save();
 	if (props.strokeStyle) doc.dash(props.strokeStyle[0])
 	if (props.lineCap) doc.lineCap(props.lineCap)
 	if (props.lineJoin) doc.lineJoin(props.lineJoin)
@@ -878,7 +997,6 @@ let drawQuadDocFn = (props) => (doc) => {
 	// let x2 = end.x;
 	// let y2 = end.y;
 
-	doc.save();
 	doc.lineWidth(props.strokeWeight);
 	doc.polygon(...points.slice(0, 4).map((p) => [p.x, p.y]))
 
@@ -962,4 +1080,23 @@ let drawRect = (props) => (p) => {
 	);
 
 	p.pop();
+};
+
+let canvasfns = {
+	"Circle": drawCircle,
+	"Quad": drawQuad,
+	"Rect": drawRect,
+	"Text": drawText,
+	"Image": drawImage,
+	"Line": drawLine,
+	"Group": (props) => (p) => {
+		let drawables = props.draw ? props.draw : [];
+
+		drawables.forEach((fn) => {
+			if (!fn) return;
+			typeof canvasfns[fn[0]] == "function"
+				? canvasfns[fn[0]](fn[1])(p)
+				: console.log("ERROR: Neither a fn nor a key");
+		});
+	},
 };
