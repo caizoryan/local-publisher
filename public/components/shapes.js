@@ -63,6 +63,25 @@ function imageToUri(url, callback) {
 	};
 }
 
+export function imageToUriInstant(base_image) {
+	const canvas = document.createElement("canvas");
+	const ctx = canvas.getContext("2d");
+
+	// low res
+	if (canvas.width > 300 || canvas.height > 300) {
+		canvas.width = base_image.width / 50;
+		canvas.height = base_image.height / 50;
+	} else {
+		canvas.width = base_image.width;
+		canvas.height = base_image.height;
+	}
+
+	ctx.drawImage(base_image, 0, 0, canvas.width, canvas.height);
+
+	let url = canvas.toDataURL("image/png");
+	return url
+}
+
 export let imageLibrary = {
 
 }

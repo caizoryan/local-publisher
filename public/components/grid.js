@@ -304,6 +304,79 @@ export let TypeGrid = {
 	},
 };
 
+export let QuadTreeGrid = {
+	id: "quad-grid",
+	inputs: {
+		width: V.number(500),
+		height: V.number(500),
+		points: V.array([]),
+		capacity: V.number(1),
+		drawGrid: V.number(1),
+		strokeWeight: V.number(1),
+		strokeColor: V.string('brown')
+	},
+
+	outputs: {},
+	render: (node) => {
+		let r = dataR(getNodeLocation(node.id), node.id);
+
+		let width = r("width");
+		let height = r("height");
+		let points = r("points");
+		let strokeColor = r("strokeColor");
+		let strokeWeight = r("strokeWeight");
+
+		let style = memo(() => `
+			position: absolute;
+			width: ${width.value()}px;
+			height: ${height.value()}px;
+			background-color: white;
+		`, [width, height])
+
+
+		let quads = memo(() => {
+			let qt = QuadTree(Rectangle(0,0,width.value(), height.value()), 1)
+			points.value().forEach(e => qt.insert(e))
+			let rects = qt.rects()
+			console.log("POINTS CHANGED", rects)
+			return rects.map(e => ['rect', {
+				x: e.x,
+				y: e.y,
+				width: e.w,
+				height: e.h,
+				"stroke-width": strokeWeight.value(),
+				stroke: strokeColor.value(),
+				fill: '#fff0'
+			}])
+		}, [points, width, height])
+
+		let svg = ['svg', {
+			style: 'position: absolute',
+			width: memo(() => width.value() , [width]),
+			height: memo(() => height.value() ,[height]),
+		}, quads, ]
+
+		return [ 
+			dom('.grid', {style}, 'GRID'), 
+			svg 
+		]
+	},
+	transform : (props) => {
+		let qt = QuadTree(Rectangle(0,0,props.width, props.height), 1)
+		props.points.forEach(e => qt.insert(e))
+		let rects = qt.rects()
+		let draw = rects.map(e => ['Rect', {
+			x: e.x,
+			y: e.y,
+			width: e.w,
+			height: e.h,
+			stroke: props.strokeColor,
+			strokeWeight: props.strokeWeight,
+		}])
+		return {draw: ['Group', {draw}]}
+	}
+}
+
 let grid = props => {
 	let columnWidth = (() => {
 		let n = 1
@@ -370,5 +443,88 @@ let grid = props => {
 		columns: [rectoColumns, versoColumns],
 		columnWidth
 	}
+}
+
+
+function QuadTree(boundary, n){
+	let capacity = n
+	let root = {}
+	let points = []
+	root.divided = false
+
+	let subdivide = () => {
+    let x = boundary.x; // now top-left x
+    let y = boundary.y; // now top-left y
+    let w = boundary.w; // full width
+    let h = boundary.h; // full height
+
+    let halfW = w / 2;
+    let halfH = h / 2;
+
+    let nwb = Rectangle(x, y, halfW, halfH);
+    root.nw = QuadTree(nwb, capacity);
+
+    let neb = Rectangle(x + halfW, y, halfW, halfH);
+    root.ne = QuadTree(neb, capacity);
+
+    let swb = Rectangle(x, y + halfH, halfW, halfH);
+    root.sw = QuadTree(swb, capacity);
+
+    let seb = Rectangle(x + halfW, y + halfH, halfW, halfH);
+    root.se = QuadTree(seb, capacity);
+	};
+
+	let insert = (point) => {
+		if (!boundary.contains(point)){ return }
+
+		if (points.length < capacity){
+			points.push(point)
+		}
+
+		else {
+			if (!root.divided){
+				subdivide()
+				root.divided=true
+			}
+
+			root.nw.insert(point)
+			root.ne.insert(point)
+			root.se.insert(point)
+			root.sw.insert(point)
+		}
+	}
+
+	let rects = () => {
+		let b = []
+		b.push(boundary)
+		if (root.divided){
+			b.push(...root.nw.rects())
+			b.push(...root.ne.rects())
+			b.push(...root.sw.rects())
+			b.push(...root.se.rects())
+		}
+
+		return b.flat()
+	}
+
+
+	root.insert = insert
+	root.points = points
+	root.boundary = boundary
+	root.rects = rects
+
+	return root
+}
+
+function Rectangle(x, y, w, h) {
+	let contains = (point) => {
+    return (
+			point.x >= x &&
+			point.x <= x + w &&
+			point.y >= y &&
+			point.y <= y + h
+    );
+	};
+	return { x, y, w, h, contains }
 }
 

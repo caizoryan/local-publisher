@@ -52,7 +52,7 @@ import { Circle, HorizontalLine, ImageElement, Line, Text, VerticalLine } from "
 import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
 import { Ghost } from "./components/ghost.js";
-import { TypeGrid } from "./components/grid.js";
+import { QuadTreeGrid, TypeGrid } from "./components/grid.js";
 
 export let registery = createRegistery();
 
@@ -152,6 +152,7 @@ registery.register(FoldTyper);
 registery.register(Ghost);
 registery.register(Grid);
 registery.register(TypeGrid);
+registery.register(QuadTreeGrid);
 registery.register(LineEditor);
 registery.register(NamedObject);
 

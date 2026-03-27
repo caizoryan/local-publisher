@@ -251,7 +251,7 @@ export let Ghost = {
 					leading: props.leading,
 				}]), ...residues]		
 		}]
-		return { draw: f }
+		return { draw: f, residue: props.residue }
 	},
 };
 

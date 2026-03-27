@@ -12,7 +12,7 @@ import { blobStream } from "./blob-stream.js";
 import { PDFDocument } from "./pdfkit.standalone.js";
 import * as PDFJS from "https://esm.sh/pdfjs-dist";
 import * as PDFWorker from "https://esm.sh/pdfjs-dist/build/pdf.worker.min";
-import { imageLibrary } from "./components/shapes.js";
+import { imageLibrary, imageToUriInstant } from "./components/shapes.js";
 
 export let pinnedCanvas = dom([".pinned"]);
 
@@ -294,7 +294,7 @@ export const renderCanvas = (node, inputs) => {
 
 		let fns = canvasfns;
 
-		p.background(250);
+		p.background(255);
 		// console.log("WHAT THE FUCK");
 
 		if (isPinned.value()) {
@@ -381,14 +381,12 @@ export const renderCanvasSpreads = (node, inputs) => {
 		if (drawables.length == 0) return;
 
 
-		p.background(250);
+		p.background(255);
 		// console.log("WHAT THE FUCK");
 
 		if (isPinned.value()) {
 			console.log("IS PINNED!");
-			pinned.fill(250)
-			pinned.stroke(0)
-			pinned.rect(0, 0, pageHeight.value(), pageWidth.value());
+			p.background(255);
 			canvasfns.Group({ draw: drawables })(pinned);
 			// return;
 		}
@@ -881,11 +879,21 @@ let drawImageDocFn = (props) => (doc) => {
 	doc.save();
 	let x = props.x;
 	let y = props.y;
-	let image = props.image;
+	let image = props.src;
+	console.log(props)
 
 	let width = props.width ? props.width : 100;
+	let img = imageLibrary[image]
+	if (!img){
+		console.error("No image...")
+		return
+	}
 
-	if (!props.image) return;
+	const ratio = img.height / img.width;
+
+	image = imageToUriInstant(img)
+
+	if (!image) return;
 	if (props.fill) doc.fillColor(props.fill);
 	// if (props.stroke) doc.stroke(props.stroke);
 	doc.image(image, x, y, { width });
@@ -903,8 +911,6 @@ let drawImage = (props) => (p) => {
 	let y = props.y;
 	let image = props.src;
 
-	console.log('src', image, imageLibrary)
-
 	let width = props.width ? props.width : 100;
 	let img = imageLibrary[image]
 	if (!img){
@@ -913,14 +919,9 @@ let drawImage = (props) => (p) => {
 		return
 	}
 
-	console.log(img)
-
 	const ratio = img.height / img.width;
-	console.log(img, ratio)
 	const targetHeight = width * ratio;
 	p.drawingContext.drawImage(img, x, y, width, targetHeight);
-	// console.log("DRWAING??")
-	// p.image(i, x, y, width, targetHeight);
 };
 
 let drawLineDocFn = (props) => (doc) => {
