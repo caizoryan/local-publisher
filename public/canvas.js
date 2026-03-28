@@ -71,7 +71,6 @@ fetch(`./font.otf`).then((res) => res.arrayBuffer()).then((res) =>
 );
 
 fetch(`./oracle.otf`).then((res) => res.arrayBuffer()).then((res) => {
-	console.log("RES!", res);
 	oracleBuffer = res;
 });
 
@@ -86,7 +85,6 @@ let cmykToRGB = (C, M, Y, K) => {
 	var r = 255 * (1 - C) * (1 - K);
 	var g = 255 * (1 - M) * (1 - K);
 	var b = 255 * (1 - Y) * (1 - K);
-	console.log(r, g, b);
 	return [r, g, b];
 };
 
@@ -299,7 +297,7 @@ export const renderCanvas = (node, inputs) => {
 
 		if (isPinned.value()) {
 			console.log("IS PINNED!");
-			pinned.fill(250)
+			pinned.fill(255)
 			pinned.stroke(0)
 			pinned.rect(0, 0, pageHeight.value(), pageWidth.value());
 			fns.Group({ draw: drawables })(pinned);
@@ -386,7 +384,7 @@ export const renderCanvasSpreads = (node, inputs) => {
 
 		if (isPinned.value()) {
 			console.log("IS PINNED!");
-			p.background(255);
+			pinned.background(255);
 			canvasfns.Group({ draw: drawables })(pinned);
 			// return;
 		}
@@ -401,8 +399,11 @@ export const renderCanvasSpreads = (node, inputs) => {
 			// sort these into drawables and properties vibes (props can be width/height...)
 			let i = inputs.value();
 			if (i && i.draw && Array.isArray(i.draw)){
-				console.log(i.draw, i.draw[index.value()])
-				draw([i.draw[index.value()]])
+				let d = i.draw
+				if (Array.isArray(i.draw[0]) && i.draw.length == 1) {
+					d = i.draw[0]
+				}
+				draw([d[index.value()]])
 			}
 			next = false;
 		}
@@ -850,7 +851,6 @@ let drawText = (props) => (p) => {
 			: p.stroke(props.stroke)
 		: p.noStroke();
 
-		console.log("BRUG", "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif")
 		let ctx = p.canvas.getContext('2d')
 		ctx.font = "normal "+fontWeight+" "+fontSize+"px "+fontFamily+", sans-serif";
 
@@ -880,7 +880,6 @@ let drawImageDocFn = (props) => (doc) => {
 	let x = props.x;
 	let y = props.y;
 	let image = props.src;
-	console.log(props)
 
 	let width = props.width ? props.width : 100;
 	let img = imageLibrary[image]

@@ -81,7 +81,11 @@ registery.register(
 	{},
 	renderCanvasSpreads,
 	(props) => {
-		return { draw: ["Group", props] };
+		let draw = props.draw
+		if (Array.isArray(draw[0]) && draw.length == 1) {
+			draw = draw[0]
+		}
+		return { draw: ["Group", {...props, draw}] };
 	},
 );
 

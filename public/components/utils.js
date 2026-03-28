@@ -1024,28 +1024,49 @@ export let String = {
 
 export let Number = {
 	id: "number",
-	inputs: { value: V.number(1) },
+	inputs: { value: V.number(1), key: V.string("value") },
 	outputs: {},
 	render: (node, i, updateOut) => {
 		let r = dataR(getNodeLocation(node.id), node.id);
-		let key = r("value");
+		let _r = dataR(getNodeLocation(node.id), node.id, "_data");
 
-		key.subscribe((v) => console.log("NUmber changed", v));
-		key.subscribe((v) => text.value = v);
+		let value = r("value");
+		let key = _r("key");
 
-		let text = dom(["input.number", {
-			type: "number",
+
+		value.next((value.value() || 'value'))
+
+		value.subscribe((v) => console.log("NUmber changed", v));
+		value.subscribe((v) => text.value = v);
+
+		let keyEl = dom(["input", {
+			type: "text",
+			style: "border-bottom: 1px solid black",
 			oninput: (e) => {
-				let v = parseFloat(e.target.value);
-				if (!isNaN(v) && typeof v == "number") key.next(v);
+				key.next(e.target.value.trim());
 				updateOut();
 			},
 			value: key,
 		}]);
 
-		return [text];
+		let text = dom(["input.number", {
+			type: "number",
+			oninput: (e) => {
+				let v = parseFloat(e.target.value);
+				if (!isNaN(v) && typeof v == "number") value.next(v);
+				updateOut();
+			},
+			value: value,
+		}]);
+
+		return [keyEl, text];
 	},
-	transform: (props) => props,
+	transform: (props, _props) => {
+		let key = _props.key ? _props.key : 'value'
+		let obj = {}
+		obj[key] = props.value
+		return obj
+	}
 };
 
 export let LineEditor = {

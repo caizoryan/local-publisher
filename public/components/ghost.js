@@ -10,6 +10,7 @@ function ghostRenderer(node, i, updateOut) {
 	let r = dataR(getNodeLocation(node.id), node.id);
 	let paragraphs = r("paragraphs");
 	let residue = r("residue");
+	let decay = r("decay");
 	let width = r("width");
 	let fontFamily = r("textFontFamily");
 	let fontSize = r("fontSize");
@@ -85,7 +86,7 @@ function ghostRenderer(node, i, updateOut) {
 			}
 			else {
 				residue.next(r.map(e => {
-					e.decayed += 0.001
+					e.decayed += decay.value() 
 					if (e.decayed >= 1) return undefined
 					else return e
 				}).filter(e => e!=undefined))
@@ -209,6 +210,7 @@ export let Ghost = {
 			text: 'Hello world'
 		}]),
 
+		decay: V.number(.0001),
 		residue: V.array([]),
 
 		width: V.number(80),

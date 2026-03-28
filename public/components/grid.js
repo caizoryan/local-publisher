@@ -338,7 +338,6 @@ export let QuadTreeGrid = {
 			let qt = QuadTree(Rectangle(0,0,width.value(), height.value()), 1)
 			points.value().forEach(e => qt.insert(e))
 			let rects = qt.rects()
-			console.log("POINTS CHANGED", rects)
 			return rects.map(e => ['rect', {
 				x: e.x,
 				y: e.y,
