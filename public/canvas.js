@@ -781,8 +781,8 @@ let drawCircle = (props) => (p) => {
 	props.stroke != undefined ? p.stroke(props.stroke) : p.noStroke();
 	props.fill != undefined
 		? Array.isArray(props.fill) ? p.fill(...props.fill) : p.fill(props.fill)
-		: p.nofill();
-	p.circle(x, y, props.radius ? props.radius * 2 : 5);
+		: p.noFill();
+	p.circle(x, y, props.radius ? props.radius * 2 : props.width ? props.width : 5);
 };
 
 let availableFonts = [

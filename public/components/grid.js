@@ -312,6 +312,7 @@ export let QuadTreeGrid = {
 		points: V.array([]),
 		capacity: V.number(1),
 		drawGrid: V.number(1),
+		shape: V.string('rect'),
 		strokeWeight: V.number(1),
 		strokeColor: V.string('brown')
 	},
@@ -325,6 +326,7 @@ export let QuadTreeGrid = {
 		let points = r("points");
 		let strokeColor = r("strokeColor");
 		let strokeWeight = r("strokeWeight");
+		let shape = r("shape");
 
 		let style = memo(() => `
 			position: absolute;
@@ -338,15 +340,16 @@ export let QuadTreeGrid = {
 			let qt = QuadTree(Rectangle(0,0,width.value(), height.value()), 1)
 			points.value().forEach(e => qt.insert(e))
 			let rects = qt.rects()
-			return rects.map(e => ['rect', {
-				x: e.x,
-				y: e.y,
-				width: e.w,
-				height: e.h,
-				"stroke-width": strokeWeight.value(),
-				stroke: strokeColor.value(),
-				fill: '#fff0'
-			}])
+			return rects.map(e => 
+				[shape.value(), {
+					x: e.x,
+					y: e.y,
+					width: e.w,
+					height: e.h,
+					"stroke-width": strokeWeight.value(),
+					stroke: strokeColor.value(),
+					fill: '#fff0'
+				}])
 		}, [points, width, height])
 
 		let svg = ['svg', {
@@ -364,7 +367,8 @@ export let QuadTreeGrid = {
 		let qt = QuadTree(Rectangle(0,0,props.width, props.height), 1)
 		props.points.forEach(e => qt.insert(e))
 		let rects = qt.rects()
-		let draw = rects.map(e => ['Rect', {
+		let upper1 = (val) => String(val).charAt(0).toUpperCase() + String(val).slice(1)
+		let draw = rects.map(e => [upper1(props.shape), {
 			x: e.x,
 			y: e.y,
 			width: e.w,
