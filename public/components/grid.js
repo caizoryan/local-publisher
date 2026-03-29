@@ -371,7 +371,7 @@ export let QuadTreeGrid = {
 		let draw = rects.map(e => [upper1(props.shape), {
 			x: e.x,
 			y: e.y,
-			width: e.w,
+			width: props.shape == 'rect' ? e.w: e.w/2,
 			height: e.h,
 			stroke: props.strokeColor,
 			strokeWeight: props.strokeWeight,

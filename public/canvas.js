@@ -764,7 +764,7 @@ let drawCircleDocFn = (props) => (doc) => {
 	if (props.strokeWeight) doc.lineWidth(props.strokeWeight);
 	let x = props.x ? props.x : 0;
 	let y = props.y ? props.y : 0;
-	doc.circle(x, y, props.radius ? props.radius : 5);
+	doc.circle(x, y, props.radius ? props.radius : props.width ? props.width : 5);
 	if (props.stroke && props.fill) doc.fillAndStroke(props.fill, props.stroke);
 	else {
 		if (props.stroke) doc.stroke(props.stroke);
@@ -782,7 +782,7 @@ let drawCircle = (props) => (p) => {
 	props.fill != undefined
 		? Array.isArray(props.fill) ? p.fill(...props.fill) : p.fill(props.fill)
 		: p.noFill();
-	p.circle(x, y, props.radius ? props.radius * 2 : props.width ? props.width : 5);
+	p.circle(x, y, props.radius ? props.radius * 2 : props.width ? props.width * 2 : 5);
 };
 
 let availableFonts = [

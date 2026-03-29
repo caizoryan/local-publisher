@@ -48,7 +48,7 @@ import {
 import { physariumCanvas, renderCanvas, renderCanvasSpreads, renderPDFCanvas } from "./canvas.js";
 import { V } from "./schema.js";
 
-import { Circle, HorizontalLine, ImageElement, Line, Text, VerticalLine } from "./components/shapes.js";
+import { Circle, HorizontalLine, ImageElement, Line, Rect, Text, VerticalLine } from "./components/shapes.js";
 import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
 import { Ghost } from "./components/ghost.js";
@@ -126,6 +126,7 @@ registery.register(
 );
 
 registery.register(Circle);
+registery.register(Rect);
 registery.register(String);
 registery.register(ImageElement);
 registery.register(LogObject);

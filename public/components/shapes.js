@@ -37,7 +37,36 @@ const circleRender = (node, inputs) => {
 };
 
 const rectRender = (node, inputs) => {
+	let r = R(getNodeLocation(node.id), node.id);
+
+	let height = r("height");
+	let width = r("width");
+
+	// to render vibes
+	let drawRectFn = (x, y) => (ctx) => {
+		let props = getProps(node.id);
+
+		ctx.strokeStyle = "black";
+		ctx.strokeWidth = 8;
+		// also do fill
+
+		ctx.beginPath();
+		ctx.rect(x, y, Math.abs(props.radius), 0, 2 * Math.PI);
+		ctx.stroke();
+	};
+
+	// This stuff should be on the outside
+	let canvas = dom(["canvas", { width: width, height: height }]);
+	let ctx = canvas.getContext("2d");
+
+	memo(() => {
+		ctx.clearRect(0, 0, width.value(), height.value());
+		drawRectFn(width.value() / 2, height.value() / 2)(ctx);
+	}, [width, height, inputs]);
+
+	return [canvas];
 };
+
 
 function imageToUri(url, callback) {
 	const canvas = document.createElement("canvas");
@@ -280,6 +309,26 @@ export const Circle = {
 	outputs: {},
 	transform: (props) => ({
 		draw: ["Circle", props],
+	}),
+};
+
+export const Rect = {
+	id: "rect",
+	render: rectRender,
+	inputs: {
+		x: V.number(Math.random() * 500),
+		y: V.number(Math.random() * 500),
+		width: V.number(50),
+		height: V.number(50),
+		strokeWeight: V.number(1),
+		fill: V.array([0, 0, 50, 15]),
+		stroke: V.string("black"),
+		// v.or(v.string('black'), v.array([0,0,0,100]))
+	},
+	color: '2',
+	outputs: {},
+	transform: (props) => ({
+		draw: ["Rect", props],
 	}),
 };
 
