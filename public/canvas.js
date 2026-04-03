@@ -19,7 +19,7 @@ export let pinnedCanvas = dom([".pinned"]);
 let pinnedContext;
 let pinnedTask;
 
-let pinned;
+export let pinned;
 
 let pageWidth = window.innerHeight - 50;
 let pageHeight = window.innerWidth - 50;
@@ -37,9 +37,6 @@ setTimeout(() => {
 	new p5(init, pinnedCanvas);
 }, 250);
 
-// pinnedContext.beginPath();
-// pinnedContext.rect(20, 20, 150, 100);
-// pinnedContext.stroke();
 
 let queued = {};
 window.pdfjsWorker = PDFWorker;
@@ -164,9 +161,7 @@ export const renderPDFCanvas = (node, inputs) => {
 	let draw = (drawables, ctx) => {
 		if (drawables.length == 0) return;
 		if (isPinned.value() && ctx != pinnedContext) {
-			console.log("IS PINNED!");
 			draw(drawables, pinnedContext);
-			// return;
 		}
 
 		const doc = new PDFDocument({
@@ -1082,7 +1077,7 @@ let drawRect = (props) => (p) => {
 	p.pop();
 };
 
-let canvasfns = {
+export let canvasfns = {
 	"Circle": drawCircle,
 	"Quad": drawQuad,
 	"Rect": drawRect,

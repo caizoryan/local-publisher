@@ -53,6 +53,7 @@ import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
 import { Ghost } from "./components/ghost.js";
 import { QuadTreeGrid, TypeGrid } from "./components/grid.js";
+import { Booklet } from "./components/imposition.js";
 
 export let registery = createRegistery();
 
@@ -88,6 +89,8 @@ registery.register(
 		return { draw: ["Group", {...props, draw}] };
 	},
 );
+
+registery.register(Booklet)
 
 registery.register(
 	"group",
