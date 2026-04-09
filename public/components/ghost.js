@@ -257,3 +257,139 @@ export let Ghost = {
 	},
 };
 
+
+let bufferCanvas = document.createElement("canvas")
+let ctx = bufferCanvas.getContext("2d")
+
+export let Paragraph = {
+	id: "paragraph",
+	inputs: {
+		text: 'Hello world',
+
+		x: V.number(Math.random() * 500),
+		y: V.number(Math.random() * 500),
+
+		width: V.number(80),
+		height: V.number(300),
+
+		fontFamily: V.string('Times New Roman'),
+		fontSize: V.number(9),
+
+
+	},
+	outputs: {},
+	render: () => [['span', 'paragraph']],
+	transform: (props, _props) => {
+		let lines = ParagraphStepper(ctx, props)
+
+		console.log(lines)
+
+		let f = ['Group', { draw: lines		}]
+		return { draw: f, residue: props.residue }
+	},
+};
+
+
+let ParagraphStepper = (doc, props) => {
+	props.fontFamily ? doc.font = 
+		 ((props.fontSize ? props.fontSize : 0)+' px') + props.fontFamily : 0
+	let align = props.align ? props.align : 'left'
+
+	let lines = [ ]
+	let words = props.text.split(" ")
+	let leading = props.leading ? props.leading : 12
+	let cursorY = props.y
+	let cursorX = props.x
+	let steps = props.steps
+	let crossed = false
+
+	let currentWord = ''
+	let currentWordWidth = ""
+
+	// let 
+	while (words.length > 0 && cursorY < (props.y + props.height) && steps > 0) {
+		crossed = false
+		let lineOpts = { 
+			words, x: props.x,
+			y: cursorY,
+			width: props.width, steps,
+			align
+		}
+		if (props.fontFamily) lineOpts.fontFamily = props.fontFamily
+		if (props.fontSize) lineOpts.fontSize = props.fontSize
+
+		let leftOvers = Line(doc, lineOpts)
+		steps = leftOvers.steps
+		cursorX = leftOvers.cursorX
+		crossed = leftOvers.crossed
+		currentWord = leftOvers.currentWord
+		currentWordWidth = leftOvers.currentWordWidth.toFixed(1)
+
+		cursorY += leading
+	}
+
+	return lines
+}
+
+
+let Line = (doc, props) => {
+	let words = props.words
+	let cursorX = props.x
+	let steps = props.steps
+	let drawables = []
+	let crossed = false
+
+	let currentWord = ''
+	let currentWordWidth = 0
+	let spaceWidth
+	let pad
+	let textFont = props.fontFamily
+
+	while (words.length > 0 && cursorX < (props.x + props.width) && steps != 0) {
+		let word = words.shift()
+		if (!word) break
+		let width = doc.measureText(word).width
+	  spaceWidth = doc.measureText(" ").width
+
+		let opts = {
+			x: cursorX,
+			y: props.y,
+			text: word,
+			fill: 'black',
+			fontFamily: textFont,
+		}
+
+		if (props.fontFamily) opts.fontFamily = props.fontFamily
+		if (props.fontSize) opts.fontSize = props.fontSize
+
+		steps -= 1
+		cursorX += width
+		currentWord = word
+		currentWordWidth = width + spaceWidth
+
+
+		// rectOpts.fill = [0, 0, 80, 0]
+
+	  pad = props.x + props.width - cursorX 
+
+
+		cursorX += spaceWidth
+
+		drawables.push(["Text", opts])
+
+		if (cursorX > props.x + props.width ) {
+			cursorX -= spaceWidth
+			break
+		}
+	}
+
+	return {
+		draw: drawables,
+		crossed,
+		words, steps, cursorX,
+		currentWord,
+		currentWordWidth,
+
+	}
+}
+

@@ -310,6 +310,7 @@ export let QuadTreeGrid = {
 		width: V.number(500),
 		height: V.number(500),
 		points: V.array([]),
+		drawPoints: V.number(0),
 		capacity: V.number(1),
 		drawGrid: V.number(1),
 		shape: V.string('rect'),
@@ -324,6 +325,7 @@ export let QuadTreeGrid = {
 		let width = r("width");
 		let height = r("height");
 		let points = r("points");
+		let drawPoints = r("drawPoints");
 		let strokeColor = r("strokeColor");
 		let strokeWeight = r("strokeWeight");
 		let shape = r("shape");
@@ -376,6 +378,11 @@ export let QuadTreeGrid = {
 			stroke: props.strokeColor,
 			strokeWeight: props.strokeWeight,
 		}])
+
+		if (props.drawPoints) {
+			draw.push(...props.points.map(e => ["Circle", {x: e.x, y: e.y, fill: props.strokeColor, radius: 2}]))
+		}
+
 		return {draw: ['Group', {draw}]}
 	}
 }

@@ -51,7 +51,7 @@ import { V } from "./schema.js";
 import { Circle, HorizontalLine, ImageElement, Line, Rect, Text, VerticalLine } from "./components/shapes.js";
 import { Fold, FoldTyper } from "./components/fold.js";
 import { GroupElement } from "./components/group.js";
-import { Ghost } from "./components/ghost.js";
+import { Ghost, Paragraph } from "./components/ghost.js";
 import { QuadTreeGrid, TypeGrid } from "./components/grid.js";
 import { Booklet } from "./components/imposition.js";
 
@@ -158,6 +158,7 @@ registery.register(VerticalLine);
 registery.register(Fold);
 registery.register(FoldTyper);
 registery.register(Ghost);
+registery.register(Paragraph);
 registery.register(Grid);
 registery.register(TypeGrid);
 registery.register(QuadTreeGrid);
